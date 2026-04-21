@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007aff">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Business System</title>
@@ -63,6 +65,12 @@
         .btn-small { padding: 8px 12px; font-size: 13px; border-radius: 8px; border: none; cursor: pointer; background: #007aff; color: white; }
     </style>
 </head>
+    <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("Service Worker Registered"));
+}
+</script>
 <body>
     <div class="header">
         <h1>📊 Business System</h1>
