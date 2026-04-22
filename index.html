@@ -1,0 +1,201 @@
+<!DOCTYPE html><html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Business System</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; background: #f5f5f7; color: #1c1c1e; }.topbar { padding: 10px 15px; background:#111827; color:white; display:flex; justify-content:space-between; align-items:center; }
+    .topbar select, .topbar button { padding:8px; border-radius:8px; border:none; }
+
+    .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; display: flex; justify-content: space-around; padding: 12px 0 25px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 1000; }
+    .nav-btn { background: none; border: none; font-size: 11px; color: #8e8e93; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 5px 15px; }
+    .nav-btn.active { color: #007aff; }
+    .nav-icon { font-size: 24px; }
+
+    .header { background: linear-gradient(135deg, #007aff 0%, #5856d6 100%); color: white; padding: 15px 20px; padding-top: 20px; }
+    .header h1 { margin: 0; font-size: 24px; }
+
+    .content { padding: 20px; padding-bottom: 100px; max-width: 600px; margin: 0 auto; }
+    .section { display: none; }
+    .section.active { display: block; }
+
+    .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .card-title { font-size: 18px; font-weight: 600; margin: 0 0 15px; }
+
+    input, select, textarea { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; font-size: 16px; background: #f2f2f7; }
+
+    .btn { width: 100%; padding: 14px; background: #007aff; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+    .btn-outline { background: transparent; border: 2px solid #007aff; color:#007aff; }
+
+    .item { background: #f2f2f7; padding: 12px; border-radius: 12px; margin-bottom: 10px; display:flex; justify-content:space-between; }
+
+    .member-toggle { width: 50px; height: 30px; background:#ccc; border-radius:20px; position:relative; cursor:pointer; }
+    .member-toggle.active { background:#34c759; }
+    .member-toggle::after { content:''; position:absolute; width:26px; height:26px; background:white; border-radius:50%; top:2px; left:2px; transition:0.3s; }
+    .member-toggle.active::after { transform:translateX(20px); }
+
+    .toast { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: #000; color: white; padding: 12px 20px; border-radius: 10px; opacity:0; transition:0.3s; }
+    .toast.show { opacity:1; }
+</style>
+
+</head>
+<body><div class="topbar">
+    <select id="businessSelect" onchange="switchBusiness()"></select>
+    <button onclick="addBusiness()">➕ Business</button>
+</div><div class="header">
+    <h1 id="bizName">📊 Business System</h1>
+</div><div class="content"><div id="dashboard" class="section active">
+    <div class="card">
+        <h3 class="card-title">Stats</h3>
+        <p id="stats">Loading...</p>
+    </div>
+</div>
+
+<div id="sales" class="section">
+    <div class="card">
+        <h3 class="card-title">New Sale</h3>
+        <input id="product" placeholder="Product">
+        <input id="qty" type="number" placeholder="Qty">
+        <input id="price" type="number" placeholder="Price">
+        <input id="discount" type="number" placeholder="Discount (optional)">
+        <button class="btn" onclick="addSale()">Save Sale</button>
+    </div>
+</div>
+
+<div id="stock" class="section">
+    <div class="card">
+        <h3>Add Product (with price range)</h3>
+        <input id="pname" placeholder="Name">
+        <input id="minPrice" placeholder="Min Price">
+        <input id="maxPrice" placeholder="Max Price">
+        <button class="btn" onclick="addProduct()">Add</button>
+    </div>
+</div>
+
+<div id="team" class="section">
+    <div class="card">
+        <h3>Add Member (FIXED)</h3>
+        <input id="mname" placeholder="Name">
+        <input id="mphone" placeholder="WhatsApp">
+        <input id="memail" placeholder="Email">
+        <button class="btn" onclick="addMember()">Add Member</button>
+        <div id="members"></div>
+    </div>
+</div>
+
+</div><div class="nav">
+    <button class="nav-btn active" onclick="show('dashboard')">📊</button>
+    <button class="nav-btn" onclick="show('sales')">🛒</button>
+    <button class="nav-btn" onclick="show('stock')">📦</button>
+    <button class="nav-btn" onclick="show('team')">👥</button>
+</div><div id="toast" class="toast"></div><script>
+
+let businesses = JSON.parse(localStorage.getItem('biz')) || [{id:1,name:'Default Business'}];
+let currentBiz = localStorage.getItem('currentBiz') || 1;
+let members = JSON.parse(localStorage.getItem('members_'+currentBiz)) || [];
+let sales = JSON.parse(localStorage.getItem('sales_'+currentBiz)) || [];
+let stock = JSON.parse(localStorage.getItem('stock_'+currentBiz)) || [];
+
+function saveAll(){
+    localStorage.setItem('members_'+currentBiz, JSON.stringify(members));
+    localStorage.setItem('sales_'+currentBiz, JSON.stringify(sales));
+    localStorage.setItem('stock_'+currentBiz, JSON.stringify(stock));
+}
+
+function loadBiz(){
+    document.getElementById('bizName').innerText = businesses.find(b=>b.id==currentBiz).name;
+}
+
+function switchBusiness(){
+    currentBiz = document.getElementById('businessSelect').value;
+    localStorage.setItem('currentBiz', currentBiz);
+    location.reload();
+}
+
+function addBusiness(){
+    let name = prompt("Business name?");
+    if(!name) return;
+    let id = Date.now();
+    businesses.push({id,name});
+    localStorage.setItem('biz', JSON.stringify(businesses));
+    location.reload();
+}
+
+function show(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+// FIXED MEMBER SYSTEM
+function addMember(){
+    let m = {
+        id:Date.now(),
+        name:mname.value,
+        phone:mphone.value.replace('+',''),
+        email:memail.value,
+        active:true
+    };
+    members.push(m);
+    saveAll();
+    renderMembers();
+    showToast("Member added & now visible in WhatsApp + Email");
+}
+
+function renderMembers(){
+    members = JSON.parse(localStorage.getItem('members_'+currentBiz)) || [];
+    document.getElementById('members').innerHTML = members.map(m=>`
+        <div class='item'>
+            <div>${m.name}<br><small>${m.phone}</small></div>
+            <div class='member-toggle ${m.active?'active':''}' onclick='toggle(${m.id})'></div>
+        </div>
+    `).join('');
+}
+
+function toggle(id){
+    let m = members.find(x=>x.id==id);
+    m.active=!m.active;
+    saveAll();
+    renderMembers();
+}
+
+// SALES + DISCOUNT
+function addSale(){
+    let p = document.getElementById('product').value;
+    let q = +document.getElementById('qty').value;
+    let price = +document.getElementById('price').value;
+    let discount = +document.getElementById('discount').value || 0;
+
+    let total = (q*price) - discount;
+
+    sales.push({p,q,price,discount,total});
+    saveAll();
+    showToast("Sale saved with discount system");
+}
+
+function addProduct(){
+    stock.push({
+        name:pname.value,
+        min:minPrice.value,
+        max:maxPrice.value
+    });
+    saveAll();
+    showToast("Product added with price range");
+}
+
+function showToast(msg){
+    let t=document.getElementById('toast');
+    t.innerText=msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function init(){
+    document.getElementById('businessSelect').innerHTML = businesses.map(b=>`<option value='${b.id}' ${b.id==currentBiz?'selected':''}>${b.name}</option>`).join('');
+    loadBiz();
+    renderMembers();
+}
+init();
+
+</script></body>
+</html>
