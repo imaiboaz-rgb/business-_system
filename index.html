@@ -118,15 +118,24 @@ function makeSale() {
 </script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-  <script>
+
+<script>
   const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "XXXX",
-    appId: "XXXX"
+    apiKey: "AIzaSyCTGerTTgr2cstlGCVuzSvU6utQsdvDZVg",
+    authDomain: "business-pro-d657d.firebaseapp.com",
+    projectId: "business-pro-d657d",
+    storageBucket: "business-pro-d657d.firebasestorage.app",
+    messagingSenderId: "200900065407",
+    appId: "1:200900065407:web:temp123" // ⚠️ placeholder
   };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  console.log("Firebase connected");
 </script>
+
+</body>
+</html>
 </body>
 </html>
