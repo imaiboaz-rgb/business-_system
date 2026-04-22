@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business POS System</title>
+<style>
+body { font-family: Arial; margin:0; background:#f5f5f5; }
+header { background:#111; color:#fff; padding:15px; text-align:center; }
+.container { padding:15px; }
+.card { background:#fff; padding:15px; margin-bottom:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);} 
+input, select, button { width:100%; padding:10px; margin-top:8px; border-radius:8px; border:1px solid #ccc; }
+button { background:#111; color:#fff; border:none; }
+button:hover { background:#333; }
+.flex { display:flex; gap:10px; }
+.flex > * { flex:1; }
+.table { width:100%; border-collapse: collapse; margin-top:10px; }
+.table th, .table td { border:1px solid #ddd; padding:8px; text-align:center; }
+.badge { background:red; color:white; padding:3px 8px; border-radius:5px; }
+</style>
+</head>
+<body>
+<header>Business POS System</header><div class="container"><!-- PRODUCT SECTION --><div class="card">
+<h3>Add Product</h3>
+<input type="text" id="productName" placeholder="Product name">
+<input type="number" id="productPrice" placeholder="Base price">
+<input type="number" id="productStock" placeholder="Stock quantity">
+<button onclick="addProduct()">Add Product</button>
+</div><!-- SALES SECTION --><div class="card">
+<h3>Make Sale</h3>
+<select id="productSelect"></select>
+<input type="number" id="quantity" placeholder="Quantity"><select id="discountType">
+<option value="none">No Discount</option>
+<option value="amount">Amount</option>
+<option value="percent">Percentage</option>
+</select><input type="number" id="discountValue" placeholder="Discount value"><input type="text" id="finalPrice" placeholder="Final Price" readonly><button onclick="makeSale()">Complete Sale</button>
+
+</div><!-- SALES TABLE --><div class="card">
+<h3>Sales</h3>
+<table class="table" id="salesTable">
+<tr><th>Product</th><th>Qty</th><th>Price</th><th>Discount</th><th>Total</th></tr>
+</table>
+</div><!-- STOCK TABLE --><div class="card">
+<h3>Stock</h3>
+<table class="table" id="stockTable">
+<tr><th>Product</th><th>Price</th><th>Stock</th></tr>
+</table>
+</div></div><script>
+let products = [];
+
+function addProduct() {
+  const name = document.getElementById('productName').value;
+  const price = parseFloat(document.getElementById('productPrice').value);
+  const stock = parseInt(document.getElementById('productStock').value);
+
+  if (!name || !price || !stock) return alert('Fill all fields');
+
+  products.push({ name, price, stock });
+  updateUI();
+}
+
+function updateUI() {
+  const select = document.getElementById('productSelect');
+  const stockTable = document.getElementById('stockTable');
+
+  select.innerHTML = '';
+  stockTable.innerHTML = '<tr><th>Product</th><th>Price</th><th>Stock</th></tr>';
+
+  products.forEach((p, i) => {
+    select.innerHTML += `<option value="${i}">${p.name}</option>`;
+    stockTable.innerHTML += `<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td></tr>`;
+  });
+}
+
+function calculatePrice() {
+  const index = document.getElementById('productSelect').value;
+  const qty = parseInt(document.getElementById('quantity').value) || 0;
+  const type = document.getElementById('discountType').value;
+  const discount = parseFloat(document.getElementById('discountValue').value) || 0;
+
+  let price = products[index].price * qty;
+  let final = price;
+
+  if (type === 'amount') final -= discount;
+  if (type === 'percent') final -= (price * discount / 100);
+
+  if (final < 0) final = 0;
+
+  document.getElementById('finalPrice').value = final.toFixed(2);
+}
+
+function makeSale() {
+  const index = document.getElementById('productSelect').value;
+  const qty = parseInt(document.getElementById('quantity').value);
+  const discount = document.getElementById('discountValue').value;
+  const total = document.getElementById('finalPrice').value;
+
+  if (!qty || qty <= 0) return alert('Invalid quantity');
+  if (products[index].stock < qty) return alert('Not enough stock');
+
+  products[index].stock -= qty;
+
+  const table = document.getElementById('salesTable');
+  table.innerHTML += `<tr>
+    <td>${products[index].name}</td>
+    <td>${qty}</td>
+    <td>${products[index].price}</td>
+    <td>${discount || 0}</td>
+    <td>${total}</td>
+  </tr>`;
+
+  updateUI();
+}
+
+// listeners
+['discountType','discountValue','quantity','productSelect'].forEach(id => {
+  document.getElementById(id).addEventListener('input', calculatePrice);
+});
+</script></body>
+</html>
