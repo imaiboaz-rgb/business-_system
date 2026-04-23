@@ -238,30 +238,28 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase Configuration - REPLACE WITH YOUR OWN CONFIG
+    // Firebase Configuration - ORIGINAL CONFIG FROM USER
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "your-project.firebaseapp.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project.appspot.com",
-      messagingSenderId: "000000000000",
-      appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
+      apiKey: "AIzaSyCTGerTTgr2cstlGCVuzSvU6utQsdvDZVg",
+      authDomain: "business-pro-d657d.firebaseapp.com",
+      projectId: "business-pro-d657d",
+      storageBucket: "business-pro-d657d.firebasestorage.app",
+      messagingSenderId: "200900065407",
+      appId: "1:200900065407:android:3f7799f64a8c36deb6a74a"
     };
 
-    // Initialize Firebase only if config is valid
+    // Initialize Firebase
     let db;
     let isOnline = false;
-    
+
     try {
-      if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-        throw new Error("Please configure your Firebase credentials");
-      }
       firebase.initializeApp(firebaseConfig);
       db = firebase.firestore();
       isOnline = true;
+      console.log("Firebase connected successfully");
     } catch (e) {
-      console.warn("Firebase not configured. Running in offline mode with localStorage.");
-      showToast("Running in offline mode. Configure Firebase for cloud sync.", "error");
+      console.error("Firebase initialization failed:", e);
+      showToast("Firebase connection failed. Check your config.", "error");
     }
 
     let products = [];
@@ -275,7 +273,7 @@
     function editBusinessName() {
       const name = prompt("Enter your business name:", businessName);
       if (name && name.trim()) {
-        businessName = name.trim().substring(0, 50); // Limit length
+        businessName = name.trim().substring(0, 50);
         localStorage.setItem("businessName", businessName);
         document.getElementById("businessName").innerText = businessName;
         showToast("Business name updated!", "success");
@@ -306,7 +304,7 @@
         snapshot.forEach(doc => {
           products.push({ id: doc.id, ...doc.data() });
         });
-        saveToLocal(); // Backup to local
+        saveToLocal();
         updateProductUI();
         updateStockTable();
         updateDashboard();
@@ -340,18 +338,18 @@
       const name = document.getElementById("productName").value.trim();
       const price = parseFloat(document.getElementById("productPrice").value);
       const stock = parseInt(document.getElementById("productStock").value);
-      
+
       let valid = true;
-      
+
       if (!name || name.length < 1) { showError("nameError", true); valid = false; }
       else { showError("nameError", false); }
-      
+
       if (isNaN(price) || price < 0) { showError("priceError", true); valid = false; }
       else { showError("priceError", false); }
-      
+
       if (isNaN(stock) || stock < 0) { showError("stockError", true); valid = false; }
       else { showError("stockError", false); }
-      
+
       return valid ? { name, price, stock } : null;
     }
 
@@ -387,7 +385,6 @@
           updateDashboard();
         }
 
-        // Clear form
         document.getElementById("productName").value = "";
         document.getElementById("productPrice").value = "";
         document.getElementById("productStock").value = "";
@@ -485,7 +482,7 @@
         if (p.stock <= 0) option.disabled = true;
         select.appendChild(option);
       });
-      
+
       if (currentVal && products.find(p => p.id === currentVal)) {
         select.value = currentVal;
       }
@@ -494,7 +491,7 @@
     function updateStockTable() {
       const tbody = document.getElementById("stockBody");
       const searchTerm = document.getElementById("stockSearch").value.toLowerCase();
-      
+
       let filtered = products;
       if (searchTerm) {
         filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
@@ -528,7 +525,7 @@
     function updateSalesTable() {
       const tbody = document.getElementById("salesBody");
       const searchTerm = document.getElementById("salesSearch").value.toLowerCase();
-      
+
       let filtered = sales;
       if (searchTerm) {
         filtered = sales.filter(s => s.product.toLowerCase().includes(searchTerm));
@@ -554,7 +551,7 @@
           </tr>
         `;
       }).join("");
-      
+
       document.getElementById("filteredCount").textContent = `Showing ${filtered.length} of ${sales.length} sales`;
     }
 
@@ -587,8 +584,6 @@
 
       final = Math.max(0, final);
       document.getElementById("finalPrice").value = `$${final.toFixed(2)} (Discount: $${discountAmount.toFixed(2)})`;
-      
-      // Store discount amount for later use
       document.getElementById("finalPrice").dataset.discountAmount = discountAmount;
     }
 
@@ -599,7 +594,6 @@
       const total = parseFloat(document.getElementById("finalPrice").value.replace(/[^0-9.]/g, '')) || 0;
       const discountAmount = parseFloat(document.getElementById("finalPrice").dataset.discountAmount) || 0;
 
-      // Validation
       if (!productId) { showError("productError", true); return; } else { showError("productError", false); }
       if (!qty || qty <= 0) { showError("qtyError", true); return; } else { showError("qtyError", false); }
 
@@ -617,18 +611,17 @@
 
       try {
         if (isOnline) {
-          // Use transaction to ensure atomicity
           await db.runTransaction(async (transaction) => {
             const productRef = db.collection("products").doc(productId);
             const productDoc = await transaction.get(productRef);
-            
+
             if (!productDoc.exists) throw new Error("Product not found");
-            
+
             const currentStock = productDoc.data().stock;
             if (qty > currentStock) throw new Error("Not enough stock");
-            
+
             transaction.update(productRef, { stock: currentStock - qty });
-            
+
             const saleRef = db.collection("sales").doc();
             transaction.set(saleRef, {
               product: product.name,
@@ -640,7 +633,6 @@
             });
           });
         } else {
-          // Offline mode - simple update
           const idx = products.findIndex(p => p.id === productId);
           if (idx !== -1) {
             products[idx].stock -= qty;
@@ -661,14 +653,13 @@
           }
         }
 
-        // Clear form
         document.getElementById("productSelect").value = "";
         document.getElementById("quantity").value = "";
         document.getElementById("discountValue").value = "";
         document.getElementById("discountType").value = "none";
         document.getElementById("finalPrice").value = "";
         delete document.getElementById("finalPrice").dataset.discountAmount;
-        
+
         showToast("Sale completed successfully!", "success");
       } catch (err) {
         showToast("Error: " + err.message, "error");
@@ -770,10 +761,9 @@
     ["discountType", "discountValue", "quantity"].forEach(id => {
       document.getElementById(id).addEventListener("input", calculatePrice);
     });
-    
+
     document.getElementById("productSelect").addEventListener("change", calculatePrice);
 
-    // Close modal on outside click
     document.getElementById("editModal").addEventListener("click", (e) => {
       if (e.target.id === "editModal") closeModal();
     });
