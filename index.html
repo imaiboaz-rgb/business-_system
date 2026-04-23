@@ -54,6 +54,9 @@
     .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; width: auto; padding: 0; margin: 0; }
+    .sync-status { position: fixed; top: 10px; right: 10px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1000; transition: all 0.3s; }
+    .sync-status.online { background: #d4edda; color: #155724; }
+    .sync-status.offline { background: #fff3cd; color: #856404; }
     @media (max-width: 768px) {
       .dashboard { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
@@ -63,6 +66,8 @@
   </style>
 </head>
 <body>
+  <div class="sync-status online" id="syncStatus">● Online</div>
+  
   <header>
     <h1 id="businessName">Business POS System</h1>
     <button class="btn-small btn-secondary" onclick="editBusinessName()" style="margin-top: 10px;">Edit Name</button>
@@ -171,7 +176,7 @@
             </tr>
           </thead>
           <tbody id="salesBody">
-            <tr class="empty"><td colspan="7">No sales yet</td></tr>
+            <tr class="empty"><td colspan="7">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -199,7 +204,7 @@
             </tr>
           </thead>
           <tbody id="stockBody">
-            <tr class="empty"><td colspan="5">No products added yet</td></tr>
+            <tr class="empty"><td colspan="5">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -238,7 +243,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase Configuration - ORIGINAL CONFIG FROM USER
+    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyCTGerTTgr2cstlGCVuzSvU6utQsdvDZVg",
       authDomain: "business-pro-d657d.firebaseapp.com",
@@ -249,22 +254,29 @@
     };
 
     // Initialize Firebase
-    let db;
-    let isOnline = false;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    try {
-      firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-      isOnline = true;
-      console.log("Firebase connected successfully");
-    } catch (e) {
-      console.error("Firebase initialization failed:", e);
-      showToast("Firebase connection failed. Check your config.", "error");
-    }
+    // CRITICAL FIX #1: Enable offline persistence for web
+    // This MUST be called before any other Firestore operations
+    db.enablePersistence({ synchronizeTabs: true })
+      .then(() => {
+        console.log("✅ Firestore offline persistence enabled");
+      })
+      .catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn("⚠️ Persistence failed: Multiple tabs open");
+        } else if (err.code === 'unimplemented') {
+          console.warn("⚠️ Persistence not supported in this browser");
+        } else {
+          console.error("❌ Persistence error:", err);
+        }
+      });
 
     let products = [];
     let sales = [];
     let editingProductId = null;
+    let unsubscribers = [];
 
     // ============ BUSINESS NAME ============
     let businessName = localStorage.getItem("businessName") || "Business POS System";
@@ -280,17 +292,40 @@
       }
     }
 
-    // ============ LOCAL STORAGE FALLBACK ============
+    // ============ NETWORK STATUS ============
+    function updateSyncStatus(isOnline) {
+      const status = document.getElementById("syncStatus");
+      if (isOnline) {
+        status.textContent = "● Online";
+        status.className = "sync-status online";
+      } else {
+        status.textContent = "● Offline (changes saved locally)";
+        status.className = "sync-status offline";
+      }
+    }
+
+    // Listen for network changes
+    window.addEventListener('online', () => updateSyncStatus(true));
+    window.addEventListener('offline', () => updateSyncStatus(false));
+    updateSyncStatus(navigator.onLine);
+
+    // ============ LOCAL STORAGE BACKUP ============
     function saveToLocal() {
-      localStorage.setItem("pos_products", JSON.stringify(products));
-      localStorage.setItem("pos_sales", JSON.stringify(sales));
+      localStorage.setItem("pos_products_backup", JSON.stringify(products));
+      localStorage.setItem("pos_sales_backup", JSON.stringify(sales));
     }
 
     function loadFromLocal() {
-      const savedProducts = localStorage.getItem("pos_products");
-      const savedSales = localStorage.getItem("pos_sales");
-      if (savedProducts) products = JSON.parse(savedProducts);
-      if (savedSales) sales = JSON.parse(savedSales);
+      const savedProducts = localStorage.getItem("pos_products_backup");
+      const savedSales = localStorage.getItem("pos_sales_backup");
+      if (savedProducts) {
+        products = JSON.parse(savedProducts);
+        console.log("📦 Loaded", products.length, "products from local backup");
+      }
+      if (savedSales) {
+        sales = JSON.parse(savedSales);
+        console.log("💰 Loaded", sales.length, "sales from local backup");
+      }
       updateProductUI();
       updateStockTable();
       updateSalesTable();
@@ -298,36 +333,56 @@
     }
 
     // ============ LOAD DATA ============
-    if (isOnline) {
-      db.collection("products").onSnapshot(snapshot => {
+    function setupListeners() {
+      // Clear any existing listeners
+      unsubscribers.forEach(unsub => unsub());
+      unsubscribers = [];
+
+      // CRITICAL FIX #2: Load from local backup FIRST so UI shows data immediately
+      loadFromLocal();
+
+      // Then set up Firestore listeners
+      const productsUnsub = db.collection("products").onSnapshot(snapshot => {
         products = [];
         snapshot.forEach(doc => {
           products.push({ id: doc.id, ...doc.data() });
         });
-        saveToLocal();
+        console.log("🔥 Firestore products loaded:", products.length);
+        saveToLocal(); // Backup to localStorage
         updateProductUI();
         updateStockTable();
         updateDashboard();
       }, err => {
-        console.error("Products load error:", err);
-        loadFromLocal();
+        console.error("Products listener error:", err);
+        // Already loaded from local above, so UI still works
       });
 
-      db.collection("sales").orderBy("date", "desc").onSnapshot(snapshot => {
+      const salesUnsub = db.collection("sales").orderBy("date", "desc").onSnapshot(snapshot => {
         sales = [];
         snapshot.forEach(doc => {
           sales.push({ id: doc.id, ...doc.data() });
         });
+        console.log("🔥 Firestore sales loaded:", sales.length);
         saveToLocal();
         updateSalesTable();
         updateDashboard();
       }, err => {
-        console.error("Sales load error:", err);
-        loadFromLocal();
+        console.error("Sales listener error:", err);
       });
-    } else {
-      loadFromLocal();
+
+      unsubscribers.push(productsUnsub, salesUnsub);
     }
+
+    // Wait for persistence to be ready before setting up listeners
+    db.enablePersistence({ synchronizeTabs: true })
+      .then(() => {
+        console.log("Persistence ready, setting up listeners");
+        setupListeners();
+      })
+      .catch(() => {
+        console.log("Persistence not available, setting up listeners anyway");
+        setupListeners();
+      });
 
     // ============ VALIDATION ============
     function showError(id, show) {
@@ -338,18 +393,18 @@
       const name = document.getElementById("productName").value.trim();
       const price = parseFloat(document.getElementById("productPrice").value);
       const stock = parseInt(document.getElementById("productStock").value);
-
+      
       let valid = true;
-
+      
       if (!name || name.length < 1) { showError("nameError", true); valid = false; }
       else { showError("nameError", false); }
-
+      
       if (isNaN(price) || price < 0) { showError("priceError", true); valid = false; }
       else { showError("priceError", false); }
-
+      
       if (isNaN(stock) || stock < 0) { showError("stockError", true); valid = false; }
       else { showError("stockError", false); }
-
+      
       return valid ? { name, price, stock } : null;
     }
 
@@ -363,27 +418,12 @@
       btn.textContent = "Adding...";
 
       try {
-        if (isOnline) {
-          await db.collection("products").add({
-            name: data.name,
-            price: data.price,
-            stock: data.stock,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          const newProduct = {
-            id: "local_" + Date.now(),
-            name: data.name,
-            price: data.price,
-            stock: data.stock,
-            createdAt: new Date().toISOString()
-          };
-          products.push(newProduct);
-          saveToLocal();
-          updateProductUI();
-          updateStockTable();
-          updateDashboard();
-        }
+        await db.collection("products").add({
+          name: data.name,
+          price: data.price,
+          stock: data.stock,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
         document.getElementById("productName").value = "";
         document.getElementById("productPrice").value = "";
@@ -399,18 +439,10 @@
 
     // ============ DELETE PRODUCT ============
     async function deleteProduct(id) {
-      if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
+      if (!confirm("Are you sure you want to delete this product?")) return;
 
       try {
-        if (isOnline) {
-          await db.collection("products").doc(id).delete();
-        } else {
-          products = products.filter(p => p.id !== id);
-          saveToLocal();
-          updateProductUI();
-          updateStockTable();
-          updateDashboard();
-        }
+        await db.collection("products").doc(id).delete();
         showToast("Product deleted!", "success");
       } catch (err) {
         showToast("Error deleting product: " + err.message, "error");
@@ -448,20 +480,10 @@
       }
 
       try {
-        if (isOnline) {
-          await db.collection("products").doc(editingProductId).update({
-            name, price, stock,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          const idx = products.findIndex(p => p.id === editingProductId);
-          if (idx !== -1) {
-            products[idx] = { ...products[idx], name, price, stock };
-            saveToLocal();
-            updateProductUI();
-            updateStockTable();
-          }
-        }
+        await db.collection("products").doc(editingProductId).update({
+          name, price, stock,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
         closeModal();
         showToast("Product updated!", "success");
       } catch (err) {
@@ -482,7 +504,7 @@
         if (p.stock <= 0) option.disabled = true;
         select.appendChild(option);
       });
-
+      
       if (currentVal && products.find(p => p.id === currentVal)) {
         select.value = currentVal;
       }
@@ -491,7 +513,7 @@
     function updateStockTable() {
       const tbody = document.getElementById("stockBody");
       const searchTerm = document.getElementById("stockSearch").value.toLowerCase();
-
+      
       let filtered = products;
       if (searchTerm) {
         filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
@@ -525,7 +547,7 @@
     function updateSalesTable() {
       const tbody = document.getElementById("salesBody");
       const searchTerm = document.getElementById("salesSearch").value.toLowerCase();
-
+      
       let filtered = sales;
       if (searchTerm) {
         filtered = sales.filter(s => s.product.toLowerCase().includes(searchTerm));
@@ -551,7 +573,7 @@
           </tr>
         `;
       }).join("");
-
+      
       document.getElementById("filteredCount").textContent = `Showing ${filtered.length} of ${sales.length} sales`;
     }
 
@@ -610,48 +632,28 @@
       btn.textContent = "Processing...";
 
       try {
-        if (isOnline) {
-          await db.runTransaction(async (transaction) => {
-            const productRef = db.collection("products").doc(productId);
-            const productDoc = await transaction.get(productRef);
-
-            if (!productDoc.exists) throw new Error("Product not found");
-
-            const currentStock = productDoc.data().stock;
-            if (qty > currentStock) throw new Error("Not enough stock");
-
-            transaction.update(productRef, { stock: currentStock - qty });
-
-            const saleRef = db.collection("sales").doc();
-            transaction.set(saleRef, {
-              product: product.name,
-              qty,
-              price: product.price,
-              discount: discountAmount,
-              total,
-              date: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        // Use transaction to ensure atomicity
+        await db.runTransaction(async (transaction) => {
+          const productRef = db.collection("products").doc(productId);
+          const productDoc = await transaction.get(productRef);
+          
+          if (!productDoc.exists) throw new Error("Product not found");
+          
+          const currentStock = productDoc.data().stock;
+          if (qty > currentStock) throw new Error("Not enough stock");
+          
+          transaction.update(productRef, { stock: currentStock - qty });
+          
+          const saleRef = db.collection("sales").doc();
+          transaction.set(saleRef, {
+            product: product.name,
+            qty,
+            price: product.price,
+            discount: discountAmount,
+            total,
+            date: firebase.firestore.FieldValue.serverTimestamp()
           });
-        } else {
-          const idx = products.findIndex(p => p.id === productId);
-          if (idx !== -1) {
-            products[idx].stock -= qty;
-            sales.unshift({
-              id: "local_sale_" + Date.now(),
-              product: product.name,
-              qty,
-              price: product.price,
-              discount: discountAmount,
-              total,
-              date: new Date().toISOString()
-            });
-            saveToLocal();
-            updateProductUI();
-            updateStockTable();
-            updateSalesTable();
-            updateDashboard();
-          }
-        }
+        });
 
         document.getElementById("productSelect").value = "";
         document.getElementById("quantity").value = "";
@@ -659,7 +661,7 @@
         document.getElementById("discountType").value = "none";
         document.getElementById("finalPrice").value = "";
         delete document.getElementById("finalPrice").dataset.discountAmount;
-
+        
         showToast("Sale completed successfully!", "success");
       } catch (err) {
         showToast("Error: " + err.message, "error");
@@ -674,14 +676,7 @@
       if (!confirm("Delete this sale record?")) return;
 
       try {
-        if (isOnline) {
-          await db.collection("sales").doc(id).delete();
-        } else {
-          sales = sales.filter(s => s.id !== id);
-          saveToLocal();
-          updateSalesTable();
-          updateDashboard();
-        }
+        await db.collection("sales").doc(id).delete();
         showToast("Sale deleted", "success");
       } catch (err) {
         showToast("Error: " + err.message, "error");
@@ -761,14 +756,14 @@
     ["discountType", "discountValue", "quantity"].forEach(id => {
       document.getElementById(id).addEventListener("input", calculatePrice);
     });
-
+    
     document.getElementById("productSelect").addEventListener("change", calculatePrice);
 
     document.getElementById("editModal").addEventListener("click", (e) => {
       if (e.target.id === "editModal") closeModal();
     });
 
-    console.log("POS System initialized. Online mode:", isOnline);
+    console.log("POS System initialized");
   </script>
 </body>
 </html>
