@@ -243,14 +243,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase Configuration
+    // Firebase Configuration - WEB APP
     const firebaseConfig = {
-      apiKey: "AIzaSyCTGerTTgr2cstlGCVuzSvU6utQsdvDZVg",
+      apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
       authDomain: "business-pro-d657d.firebaseapp.com",
       projectId: "business-pro-d657d",
       storageBucket: "business-pro-d657d.firebasestorage.app",
       messagingSenderId: "200900065407",
-      appId: "1:200900065407:android:3f7799f64a8c36deb6a74a"
+      appId: "1:200900065407:web:1f476c5ecab0fe59b6a74a",
+      measurementId: "G-ZM7PHG8FRM"
     };
 
     // Initialize Firebase
@@ -372,17 +373,8 @@
 
       unsubscribers.push(productsUnsub, salesUnsub);
     }
-
-    // Wait for persistence to be ready before setting up listeners
-    db.enablePersistence({ synchronizeTabs: true })
-      .then(() => {
-        console.log("Persistence ready, setting up listeners");
-        setupListeners();
-      })
-      .catch(() => {
-        console.log("Persistence not available, setting up listeners anyway");
-        setupListeners();
-      });
+    // Setup listeners immediately (persistence already enabled above)
+    setupListeners();
 
     // ============ VALIDATION ============
     function showError(id, show) {
