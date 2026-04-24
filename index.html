@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business POS System</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f0f2f5; color: #333; }
+    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    header h1 { margin: 0; font-size: 28px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+    .stat-card { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; transition: transform 0.3s; cursor: pointer; }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-card h4 { margin: 0 0 10px 0; color: #666; font-size: 14px; text-transform: uppercase; }
+    .stat-card p { margin: 0; font-size: 32px; font-weight: bold; color: #667eea; }
+    .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 10px; }
+    label { display: block; font-weight: 600; margin-bottom: 4px; color: #555; font-size: 14px; }
+    input, select, textarea { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: all 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    button { width: 100%; padding: 12px; margin-top: 10px; background: #667eea; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+    button:hover { background: #5568d3; transform: translateY(-1px); }
+    button:active { transform: scale(0.98); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    .btn-danger { background: #e74c3c; }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-secondary { background: #95a5a6; }
+    .btn-secondary:hover { background: #7f8c8d; }
+    .btn-small { width: auto; padding: 6px 12px; font-size: 12px; margin-top: 0; margin-right: 5px; }
+    .flex { display: flex; gap: 10px; }
+    .flex > * { flex: 1; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .table th { background: #667eea; color: #fff; padding: 12px; text-align: left; font-weight: bold; }
+    .table td { padding: 12px; border-bottom: 1px solid #eee; }
+    .table tr:hover { background: #f9f9f9; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    .badge.success { background: #d4edda; color: #155724; }
+    .badge.warning { background: #fff3cd; color: #856404; }
+    .badge.danger { background: #f8d7da; color: #721c24; }
+    .empty { text-align: center; color: #999; padding: 30px; }
+    .form-group { margin-bottom: 15px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .error-msg { color: #e74c3c; font-size: 13px; margin-top: 4px; display: none; }
+    .error-msg.visible { display: block; }
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 20px; border-radius: 8px; color: white; font-weight: 600; opacity: 0; transform: translateY(20px); transition: all 0.3s; z-index: 1000; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .search-box { margin-bottom: 15px; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: white; padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #666; width: auto; padding: 0; margin: 0; }
+    .sync-status { position: fixed; top: 10px; right: 10px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1000; transition: all 0.3s; }
+    .sync-status.online { background: #d4edda; color: #155724; }
+    .sync-status.offline { background: #fff3cd; color: #856404; }
+
+    /* LOGIN PAGE STYLES */
+    #loginPage {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .login-container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 420px;
+      animation: slideUp 0.4s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-container h2 {
+      text-align: center;
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 26px;
+    }
+    .login-container .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+    .login-tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+    .login-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      background: #f5f5f5;
+      color: #666;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      margin: 0;
+      border-radius: 0;
+      transition: all 0.2s;
+    }
+    .login-tab.active {
+      background: #667eea;
+      color: #fff;
+    }
+    .login-tab:hover:not(.active) {
+      background: #e8e8e8;
+    }
+    .login-form { display: none; }
+    .login-form.active { display: block; }
+    .login-container .form-group { margin-bottom: 18px; }
+    .login-container input {
+      padding: 12px;
+      font-size: 15px;
+    }
+    .login-container button[type="submit"] {
+      padding: 14px;
+      font-size: 16px;
+      margin-top: 5px;
+    }
+    .login-footer {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #888;
+    }
+    .login-footer a {
+      color: #667eea;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .login-footer a:hover { text-decoration: underline; }
+    .password-strength {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 6px;
+      transition: all 0.3s;
+    }
+    .strength-weak { background: #e74c3c; width: 33%; }
+    .strength-medium { background: #f39c12; width: 66%; }
+    .strength-strong { background: #27ae60; width: 100%; }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+    .user-info span {
+      font-size: 14px;
+      color: #fff;
+      font-weight: 500;
+    }
+    .user-info button {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 12px;
+      margin: 0;
+    }
+    @media (max-width: 768px) {
+      .dashboard { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .table { font-size: 12px; }
+      .table th, .table td { padding: 8px; }
+      .login-container { padding: 25px; margin: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGIN PAGE -->
+  <div id="loginPage">
+    <div class="login-container">
+      <h2>🔐 Business POS</h2>
+      <p class="subtitle">Secure Login System</p>
+
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="switchTab('signin')" id="tabSignin">Sign In</button>
+        <button class="login-tab" onclick="switchTab('signup')" id="tabSignup">Create Account</button>
+      </div>
+
+      <!-- SIGN IN FORM -->
+      <form class="login-form active" id="signinForm" onsubmit="handleSignIn(event)">
+        <div class="form-group">
+          <label for="signinEmail">Email Address</label>
+          <input type="email" id="signinEmail" placeholder="Enter your email" required />
+        </div>
+        <div class="form-group">
+          <label for="signinPassword">Password</label>
+          <input type="password" id="signinPassword" placeholder="Enter your password" required />
+        </div>
+        <button type="submit" id="signinBtn">Sign In</button>
+        <div class="login-footer">
+          <a onclick="showForgotPassword()">Forgot password?</a>
+        </div>
+      </form>
+
+      <!-- SIGN UP FORM -->
+      <form class="login-form" id="signupForm" onsubmit="handleSignUp(event)">
+        <div class="form-group">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" placeholder="Enter your full name" required />
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="Enter your email" required />
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" oninput="checkPasswordStrength()" />
+          <div class="password-strength" id="passwordStrength"></div>
+        </div>
+        <div class="form-group">
+          <label for="signupConfirmPassword">Confirm Password</label>
+          <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required />
+        </div>
+        <button type="submit" id="signupBtn">Create Account</button>
+      </form>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <form class="login-form" id="forgotForm" onsubmit="handleForgotPassword(event)">
+        <div class="form-group">
+          <label for="forgotEmail">Email Address</label>
+          <input type="email" id="forgotEmail" placeholder="Enter your email" required />
+        </div>
+        <button type="submit" id="forgotBtn">Send Reset Link</button>
+        <div class="login-footer">
+          <a onclick="backToSignIn()">Back to Sign In</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="sync-status online" id="syncStatus">● Online</div>
+
+  <header>
+    <h1 id="businessName">Business POS System</h1>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px;">
+      <button class="btn-small btn-secondary" onclick="editBusinessName()">Edit Name</button>
+      <div class="user-info" id="userInfo" style="display: none;">
+        <span id="userDisplayName"></span>
+        <button class="btn-small btn-secondary" onclick="signOutUser()">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container" id="mainApp" style="display: none;">
+    <!-- DASHBOARD -->
+    <div class="dashboard">
+      <div class="stat-card" onclick="scrollToSection('sales-history')">
+        <h4>Total Sales</h4>
+        <p id="totalSales">$0.00</p>
+      </div>
+      <div class="stat-card" onclick="scrollToSection('sales-history')">
+        <h4>Total Orders</h4>
+        <p id="totalOrders">0</p>
+      </div>
+      <div class="stat-card" onclick="scrollToSection('inventory')">
+        <h4>Products</h4>
+        <p id="totalProducts">0</p>
+      </div>
+      <div class="stat-card" onclick="scrollToSection('inventory')">
+        <h4>Low Stock</h4>
+        <p id="lowStockCount">0</p>
+      </div>
+    </div>
+
+    <!-- ADD PRODUCT -->
+    <div class="card" id="add-product">
+      <h3>➕ Add Product</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="productName">Product Name *</label>
+          <input type="text" id="productName" placeholder="Enter product name" />
+          <div class="error-msg" id="nameError">Product name is required</div>
+        </div>
+        <div class="form-group">
+          <label for="productPrice">Price ($) *</label>
+          <input type="number" id="productPrice" placeholder="0.00" step="0.01" min="0" />
+          <div class="error-msg" id="priceError">Valid price is required</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="productStock">Stock Quantity *</label>
+        <input type="number" id="productStock" placeholder="0" min="0" />
+        <div class="error-msg" id="stockError">Valid stock quantity is required</div>
+      </div>
+      <button onclick="addProduct()" id="addProductBtn">Add Product</button>
+    </div>
+
+    <!-- MAKE SALE -->
+    <div class="card" id="make-sale">
+      <h3>💳 Make Sale</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="productSelect">Product *</label>
+          <select id="productSelect">
+            <option value="">-- Select Product --</option>
+          </select>
+          <div class="error-msg" id="productError">Please select a product</div>
+        </div>
+        <div class="form-group">
+          <label for="quantity">Quantity *</label>
+          <input type="number" id="quantity" placeholder="1" min="1" />
+          <div class="error-msg" id="qtyError">Valid quantity is required</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="discountType">Discount Type</label>
+          <select id="discountType">
+            <option value="none">No Discount</option>
+            <option value="amount">Amount ($)</option>
+            <option value="percent">Percentage (%)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="discountValue">Discount Value</label>
+          <input type="number" id="discountValue" placeholder="0" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="finalPrice">Final Price</label>
+        <input type="text" id="finalPrice" placeholder="Auto-calculated" readonly style="background: #f5f5f5; font-weight: bold;" />
+      </div>
+      <button onclick="makeSale()" id="makeSaleBtn">Complete Sale</button>
+    </div>
+
+    <!-- SALES HISTORY -->
+    <div class="card" id="sales-history">
+      <h3>📊 Sales History</h3>
+      <div class="flex search-box">
+        <input type="text" id="salesSearch" placeholder="Search sales..." oninput="filterSales()" style="margin-top: 0;" />
+        <button class="btn-secondary" onclick="exportSales()" style="width: auto; margin-top: 0;">Export CSV</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="table" id="salesTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th>Discount</th>
+              <th>Total</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody">
+            <tr class="empty"><td colspan="7">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+        <strong>Total Revenue: <span id="totalRevenue" style="color: #667eea; font-size: 18px;">$0.00</span></strong>
+        <span id="filteredCount" style="color: #666; font-size: 14px;"></span>
+      </div>
+    </div>
+
+    <!-- STOCK INVENTORY -->
+    <div class="card" id="inventory">
+      <h3>📦 Stock Inventory</h3>
+      <div class="search-box">
+        <input type="text" id="stockSearch" placeholder="Search products..." oninput="filterStock()" style="margin-top: 0;" />
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="table" id="stockTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="stockBody">
+            <tr class="empty"><td colspan="5">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Product Modal -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Product</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <input type="hidden" id="editProductId" />
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" id="editProductName" />
+      </div>
+      <div class="form-group">
+        <label>Price ($)</label>
+        <input type="number" id="editProductPrice" step="0.01" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Stock Quantity</label>
+        <input type="number" id="editProductStock" min="0" />
+      </div>
+      <button onclick="updateProduct()">Update Product</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+  <script>
+    // Firebase Configuration - WEB APP
+    const firebaseConfig = {
+      apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
+      authDomain: "business-pro-d657d.firebaseapp.com",
+      projectId: "business-pro-d657d",
+      storageBucket: "business-pro-d657d.firebasestorage.app",
+      messagingSenderId: "200900065407",
+      appId: "1:200900065407:web:1f476c5ecab0fe59b6a74a",
+      measurementId: "G-ZM7PHG8FRM"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // CRITICAL FIX #1: Enable offline persistence for web
+    db.enablePersistence({ synchronizeTabs: true })
+      .then(() => {
+        console.log("✅ Firestore offline persistence enabled");
+      })
+      .catch((err) => {
+        if (err.code === 'failed-precondition') {
+          console.warn("⚠️ Persistence failed: Multiple tabs open");
+        } else if (err.code === 'unimplemented') {
+          console.warn("⚠️ Persistence not supported in this browser");
+        } else {
+          console.error("❌ Persistence error:", err);
+        }
+      });
+
+    let products = [];
+    let sales = [];
+    let editingProductId = null;
+    let unsubscribers = [];
+    let currentUser = null;
+
+    // ============ AUTH STATE LISTENER ============
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        showMainApp();
+        setupListeners();
+      } else {
+        currentUser = null;
+        showLoginPage();
+        // Clear listeners when logged out
+        unsubscribers.forEach(unsub => unsub());
+        unsubscribers = [];
+      }
+    });
+
+    // ============ LOGIN PAGE FUNCTIONS ============
+    function switchTab(tab) {
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+
+      if (tab === 'signin') {
+        document.getElementById('tabSignin').classList.add('active');
+        document.getElementById('signinForm').classList.add('active');
+      } else if (tab === 'signup') {
+        document.getElementById('tabSignup').classList.add('active');
+        document.getElementById('signupForm').classList.add('active');
+      }
+    }
+
+    function showForgotPassword() {
+      document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('forgotForm').classList.add('active');
+    }
+
+    function backToSignIn() {
+      switchTab('signin');
+    }
+
+    function checkPasswordStrength() {
+      const password = document.getElementById('signupPassword').value;
+      const strengthBar = document.getElementById('passwordStrength');
+
+      if (password.length === 0) {
+        strengthBar.className = 'password-strength';
+        return;
+      }
+
+      let strength = 0;
+      if (password.length >= 6) strength++;
+      if (password.length >= 10) strength++;
+      if (/[A-Z]/.test(password)) strength++;
+      if (/[0-9]/.test(password)) strength++;
+      if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+      strengthBar.className = 'password-strength';
+      if (strength <= 2) {
+        strengthBar.classList.add('strength-weak');
+      } else if (strength <= 4) {
+        strengthBar.classList.add('strength-medium');
+      } else {
+        strengthBar.classList.add('strength-strong');
+      }
+    }
+
+    async function handleSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('signinEmail').value.trim();
+      const password = document.getElementById('signinPassword').value;
+      const btn = document.getElementById('signinBtn');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast('Welcome back!', 'success');
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    async function handleSignUp(e) {
+      e.preventDefault();
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+      const btn = document.getElementById('signupBtn');
+
+      if (password !== confirmPassword) {
+        showToast('Passwords do not match!', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast('Password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: name });
+
+        // Save user info to Firestore
+        await db.collection('users').doc(userCredential.user.uid).set({
+          name: name,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast('Account created successfully!', 'success');
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+
+    async function handleForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const btn = document.getElementById('forgotBtn');
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showToast('Password reset email sent! Check your inbox.', 'success');
+        backToSignIn();
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    }
+
+    async function signOutUser() {
+      try {
+        await auth.signOut();
+        showToast('Logged out successfully', 'success');
+      } catch (err) {
+        showToast('Error signing out: ' + err.message, 'error');
+      }
+    }
+
+    function showLoginPage() {
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'none';
+      // Reset forms
+      document.getElementById('signinForm').reset();
+      document.getElementById('signupForm').reset();
+      document.getElementById('forgotForm').reset();
+      document.getElementById('passwordStrength').className = 'password-strength';
+      switchTab('signin');
+    }
+
+    function showMainApp() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userDisplayName').textContent = currentUser.displayName || currentUser.email;
+    }
+
+    // ============ BUSINESS NAME ============
+    let businessName = localStorage.getItem("businessName") || "Business POS System";
+    document.getElementById("businessName").innerText = businessName;
+
+    function editBusinessName() {
+      const name = prompt("Enter your business name:", businessName);
+      if (name && name.trim()) {
+        businessName = name.trim().substring(0, 50);
+        localStorage.setItem("businessName", businessName);
+        document.getElementById("businessName").innerText = businessName;
+        showToast("Business name updated!", "success");
+      }
+    }
+
+    // ============ NETWORK STATUS ============
+    function updateSyncStatus(isOnline) {
+      const status = document.getElementById("syncStatus");
+      if (isOnline) {
+        status.textContent = "● Online";
+        status.className = "sync-status online";
+      } else {
+        status.textContent = "● Offline (changes saved locally)";
+        status.className = "sync-status offline";
+      }
+    }
+
+    window.addEventListener('online', () => updateSyncStatus(true));
+    window.addEventListener('offline', () => updateSyncStatus(false));
+    updateSyncStatus(navigator.onLine);
+
+    // ============ LOCAL STORAGE BACKUP ============
+    function saveToLocal() {
+      localStorage.setItem("pos_products_backup_" + currentUser.uid, JSON.stringify(products));
+      localStorage.setItem("pos_sales_backup_" + currentUser.uid, JSON.stringify(sales));
+    }
+
+    function loadFromLocal() {
+      if (!currentUser) return;
+      const savedProducts = localStorage.getItem("pos_products_backup_" + currentUser.uid);
+      const savedSales = localStorage.getItem("pos_sales_backup_" + currentUser.uid);
+      if (savedProducts) {
+        products = JSON.parse(savedProducts);
+        console.log("📦 Loaded", products.length, "products from local backup");
+      }
+      if (savedSales) {
+        sales = JSON.parse(savedSales);
+        console.log("💰 Loaded", sales.length, "sales from local backup");
+      }
+      updateProductUI();
+      updateStockTable();
+      updateSalesTable();
+      updateDashboard();
+    }
+
+    // ============ LOAD DATA ============
+    function setupListeners() {
+      if (!currentUser) return;
+
+      unsubscribers.forEach(unsub => unsub());
+      unsubscribers = [];
+
+      loadFromLocal();
+
+      const productsUnsub = db.collection("products")
+        .where("userId", "==", currentUser.uid)
+        .onSnapshot(snapshot => {
+          products = [];
+          snapshot.forEach(doc => {
+            products.push({ id: doc.id, ...doc.data() });
+          });
+          console.log("🔥 Firestore products loaded:", products.length);
+          saveToLocal();
+          updateProductUI();
+          updateStockTable();
+          updateDashboard();
+        }, err => {
+          console.error("Products listener error:", err);
+        });
+
+      const salesUnsub = db.collection("sales")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("date", "desc")
+        .onSnapshot(snapshot => {
+          sales = [];
+          snapshot.forEach(doc => {
+            sales.push({ id: doc.id, ...doc.data() });
+          });
+          console.log("🔥 Firestore sales loaded:", sales.length);
+          saveToLocal();
+          updateSalesTable();
+          updateDashboard();
+        }, err => {
+          console.error("Sales listener error:", err);
+        });
+
+      unsubscribers.push(productsUnsub, salesUnsub);
+    }
+
+    // ============ VALIDATION ============
+    function showError(id, show) {
+      document.getElementById(id).classList.toggle("visible", show);
+    }
+
+    function validateProduct() {
+      const name = document.getElementById("productName").value.trim();
+      const price = parseFloat(document.getElementById("productPrice").value);
+      const stock = parseInt(document.getElementById("productStock").value);
+
+      let valid = true;
+
+      if (!name || name.length < 1) { showError("nameError", true); valid = false; }
+      else { showError("nameError", false); }
+
+      if (isNaN(price) || price < 0) { showError("priceError", true); valid = false; }
+      else { showError("priceError", false); }
+
+      if (isNaN(stock) || stock < 0) { showError("stockError", true); valid = false; }
+      else { showError("stockError", false); }
+
+      return valid ? { name, price, stock } : null;
+    }
+
+    // ============ ADD PRODUCT ============
+    async function addProduct() {
+      if (!currentUser) { showToast("Please log in first", "error"); return; }
+      const data = validateProduct();
+      if (!data) return;
+
+      const btn = document.getElementById("addProductBtn");
+      btn.disabled = true;
+      btn.textContent = "Adding...";
+
+      try {
+        await db.collection("products").add({
+          name: data.name,
+          price: data.price,
+          stock: data.stock,
+          userId: currentUser.uid,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById("productName").value = "";
+        document.getElementById("productPrice").value = "";
+        document.getElementById("productStock").value = "";
+        showToast("Product added successfully!", "success");
+      } catch (err) {
+        showToast("Error adding product: " + err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add Product";
+      }
+    }
+
+    // ============ DELETE PRODUCT ============
+    async function deleteProduct(id) {
+      if (!confirm("Are you sure you want to delete this product?")) return;
+
+      try {
+        await db.collection("products").doc(id).delete();
+        showToast("Product deleted!", "success");
+      } catch (err) {
+        showToast("Error deleting product: " + err.message, "error");
+      }
+    }
+
+    // ============ EDIT PRODUCT ============
+    function openEditModal(id) {
+      const product = products.find(p => p.id === id);
+      if (!product) return;
+
+      editingProductId = id;
+      document.getElementById("editProductId").value = id;
+      document.getElementById("editProductName").value = product.name;
+      document.getElementById("editProductPrice").value = product.price;
+      document.getElementById("editProductStock").value = product.stock;
+      document.getElementById("editModal").classList.add("active");
+    }
+
+    function closeModal() {
+      document.getElementById("editModal").classList.remove("active");
+      editingProductId = null;
+    }
+
+    async function updateProduct() {
+      if (!editingProductId) return;
+
+      const name = document.getElementById("editProductName").value.trim();
+      const price = parseFloat(document.getElementById("editProductPrice").value);
+      const stock = parseInt(document.getElementById("editProductStock").value);
+
+      if (!name || isNaN(price) || isNaN(stock)) {
+        showToast("Please fill all fields correctly", "error");
+        return;
+      }
+
+      try {
+        await db.collection("products").doc(editingProductId).update({
+          name, price, stock,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        closeModal();
+        showToast("Product updated!", "success");
+      } catch (err) {
+        showToast("Error updating product: " + err.message, "error");
+      }
+    }
+
+    // ============ UPDATE UI ============
+    function updateProductUI() {
+      const select = document.getElementById("productSelect");
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">-- Select Product --</option>';
+
+      products.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.id;
+        option.textContent = `${p.name} ($${p.price.toFixed(2)}) - ${p.stock} in stock`;
+        if (p.stock <= 0) option.disabled = true;
+        select.appendChild(option);
+      });
+
+      if (currentVal && products.find(p => p.id === currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    function updateStockTable() {
+      const tbody = document.getElementById("stockBody");
+      const searchTerm = document.getElementById("stockSearch").value.toLowerCase();
+
+      let filtered = products;
+      if (searchTerm) {
+        filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr class="empty"><td colspan="5">No products found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(p => {
+        let status = '<span class="badge success">In Stock</span>';
+        if (p.stock <= 0) status = '<span class="badge danger">Out of Stock</span>';
+        else if (p.stock <= 10) status = '<span class="badge warning">Low Stock</span>';
+
+        return `
+          <tr>
+            <td>${escapeHtml(p.name)}</td>
+            <td>$${p.price.toFixed(2)}</td>
+            <td>${p.stock}</td>
+            <td>${status}</td>
+            <td>
+              <button class="btn-small" onclick="openEditModal('${p.id}')">Edit</button>
+              <button class="btn-small btn-danger" onclick="deleteProduct('${p.id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function updateSalesTable() {
+      const tbody = document.getElementById("salesBody");
+      const searchTerm = document.getElementById("salesSearch").value.toLowerCase();
+
+      let filtered = sales;
+      if (searchTerm) {
+        filtered = sales.filter(s => s.product.toLowerCase().includes(searchTerm));
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr class="empty"><td colspan="7">No sales found</td></tr>';
+        document.getElementById("filteredCount").textContent = "";
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        const date = s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toLocaleString() : "N/A";
+        return `
+          <tr>
+            <td>${escapeHtml(s.product)}</td>
+            <td>${s.qty}</td>
+            <td>$${s.price.toFixed(2)}</td>
+            <td>$${s.discount.toFixed(2)}</td>
+            <td><strong>$${s.total.toFixed(2)}</strong></td>
+            <td>${date}</td>
+            <td><button class="btn-small btn-danger" onclick="deleteSale('${s.id}')">Delete</button></td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("filteredCount").textContent = `Showing ${filtered.length} of ${sales.length} sales`;
+    }
+
+    // ============ CALCULATE PRICE ============
+    function calculatePrice() {
+      const productId = document.getElementById("productSelect").value;
+      const qty = parseInt(document.getElementById("quantity").value) || 0;
+      const type = document.getElementById("discountType").value;
+      const discount = parseFloat(document.getElementById("discountValue").value) || 0;
+
+      if (!productId || qty <= 0) {
+        document.getElementById("finalPrice").value = "";
+        return;
+      }
+
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      let subtotal = product.price * qty;
+      let final = subtotal;
+      let discountAmount = 0;
+
+      if (type === "amount") {
+        discountAmount = Math.min(discount, subtotal);
+        final = subtotal - discountAmount;
+      } else if (type === "percent") {
+        discountAmount = subtotal * Math.min(discount, 100) / 100;
+        final = subtotal - discountAmount;
+      }
+
+      final = Math.max(0, final);
+      document.getElementById("finalPrice").value = `$${final.toFixed(2)} (Discount: $${discountAmount.toFixed(2)})`;
+      document.getElementById("finalPrice").dataset.discountAmount = discountAmount;
+    }
+
+    // ============ MAKE SALE ============
+    async function makeSale() {
+      if (!currentUser) { showToast("Please log in first", "error"); return; }
+      const productId = document.getElementById("productSelect").value;
+      const qty = parseInt(document.getElementById("quantity").value);
+      const total = parseFloat(document.getElementById("finalPrice").value.replace(/[^0-9.]/g, '')) || 0;
+      const discountAmount = parseFloat(document.getElementById("finalPrice").dataset.discountAmount) || 0;
+
+      if (!productId) { showError("productError", true); return; } else { showError("productError", false); }
+      if (!qty || qty <= 0) { showError("qtyError", true); return; } else { showError("qtyError", false); }
+
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      if (qty > product.stock) {
+        showToast(`Not enough stock! Only ${product.stock} available.`, "error");
+        return;
+      }
+
+      const btn = document.getElementById("makeSaleBtn");
+      btn.disabled = true;
+      btn.textContent = "Processing...";
+
+      try {
+        await db.runTransaction(async (transaction) => {
+          const productRef = db.collection("products").doc(productId);
+          const productDoc = await transaction.get(productRef);
+
+          if (!productDoc.exists) throw new Error("Product not found");
+
+          const currentStock = productDoc.data().stock;
+          if (qty > currentStock) throw new Error("Not enough stock");
+
+          transaction.update(productRef, { stock: currentStock - qty });
+
+          const saleRef = db.collection("sales").doc();
+          transaction.set(saleRef, {
+            product: product.name,
+            qty,
+            price: product.price,
+            discount: discountAmount,
+            total,
+            userId: currentUser.uid,
+            date: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+
+        document.getElementById("productSelect").value = "";
+        document.getElementById("quantity").value = "";
+        document.getElementById("discountValue").value = "";
+        document.getElementById("discountType").value = "none";
+        document.getElementById("finalPrice").value = "";
+        delete document.getElementById("finalPrice").dataset.discountAmount;
+
+        showToast("Sale completed successfully!", "success");
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Complete Sale";
+      }
+    }
+
+    // ============ DELETE SALE ============
+    async function deleteSale(id) {
+      if (!confirm("Delete this sale record?")) return;
+
+      try {
+        await db.collection("sales").doc(id).delete();
+        showToast("Sale deleted", "success");
+      } catch (err) {
+        showToast("Error: " + err.message, "error");
+      }
+    }
+
+    // ============ UPDATE DASHBOARD ============
+    function updateDashboard() {
+      const totalRevenue = sales.reduce((sum, s) => sum + parseFloat(s.total), 0);
+      const lowStockProducts = products.filter(p => p.stock > 0 && p.stock <= 10).length;
+      const outOfStock = products.filter(p => p.stock <= 0).length;
+
+      document.getElementById("totalSales").innerText = "$" + totalRevenue.toFixed(2);
+      document.getElementById("totalOrders").innerText = sales.length;
+      document.getElementById("totalProducts").innerText = products.length;
+      document.getElementById("lowStockCount").innerText = lowStockProducts + (outOfStock > 0 ? ` (+${outOfStock} out)` : "");
+      document.getElementById("totalRevenue").innerText = "$" + totalRevenue.toFixed(2);
+    }
+
+    // ============ SEARCH & FILTER ============
+    function filterSales() {
+      updateSalesTable();
+    }
+
+    function filterStock() {
+      updateStockTable();
+    }
+
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ============ EXPORT ============
+    function exportSales() {
+      if (sales.length === 0) {
+        showToast("No sales to export", "error");
+        return;
+      }
+
+      const csv = [
+        ["Date", "Product", "Quantity", "Unit Price", "Discount", "Total"],
+        ...sales.map(s => [
+          s.date ? new Date(s.date.toDate ? s.date.toDate() : s.date).toLocaleString() : "N/A",
+          s.product,
+          s.qty,
+          s.price.toFixed(2),
+          s.discount.toFixed(2),
+          s.total.toFixed(2)
+        ])
+      ].map(row => row.join(",")).join("
+");
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sales_export_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast("Sales exported!", "success");
+    }
+
+    // ============ UTILITIES ============
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(message, type = "success") {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+
+    // ============ EVENT LISTENERS ============
+    ["discountType", "discountValue", "quantity"].forEach(id => {
+      document.getElementById(id).addEventListener("input", calculatePrice);
+    });
+
+    document.getElementById("productSelect").addEventListener("change", calculatePrice);
+
+    document.getElementById("editModal").addEventListener("click", (e) => {
+      if (e.target.id === "editModal") closeModal();
+    });
+
+    console.log("POS System initialized");
+  </script>
+</body>
+</html>
