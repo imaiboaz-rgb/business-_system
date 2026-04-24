@@ -57,23 +57,209 @@
     .sync-status { position: fixed; top: 10px; right: 10px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; z-index: 1000; transition: all 0.3s; }
     .sync-status.online { background: #d4edda; color: #155724; }
     .sync-status.offline { background: #fff3cd; color: #856404; }
+
+    /* LOGIN PAGE STYLES */
+    #loginPage {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    .login-container {
+      background: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      width: 100%;
+      max-width: 420px;
+      animation: slideUp 0.4s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .login-container h2 {
+      text-align: center;
+      margin: 0 0 8px 0;
+      color: #333;
+      font-size: 26px;
+    }
+    .login-container .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+    .login-tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+    .login-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      background: #f5f5f5;
+      color: #666;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      margin: 0;
+      border-radius: 0;
+      transition: all 0.2s;
+    }
+    .login-tab.active {
+      background: #667eea;
+      color: #fff;
+    }
+    .login-tab:hover:not(.active) {
+      background: #e8e8e8;
+    }
+    .login-form { display: none; }
+    .login-form.active { display: block; }
+    .login-container .form-group { margin-bottom: 18px; }
+    .login-container input {
+      padding: 12px;
+      font-size: 15px;
+    }
+    .login-container button[type="submit"] {
+      padding: 14px;
+      font-size: 16px;
+      margin-top: 5px;
+    }
+    .login-footer {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: #888;
+    }
+    .login-footer a {
+      color: #667eea;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .login-footer a:hover { text-decoration: underline; }
+    .password-strength {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 6px;
+      transition: all 0.3s;
+    }
+    .strength-weak { background: #e74c3c; width: 33%; }
+    .strength-medium { background: #f39c12; width: 66%; }
+    .strength-strong { background: #27ae60; width: 100%; }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+    .user-info span {
+      font-size: 14px;
+      color: #fff;
+      font-weight: 500;
+    }
+    .user-info button {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 12px;
+      margin: 0;
+    }
     @media (max-width: 768px) {
       .dashboard { grid-template-columns: 1fr; }
       .form-row { grid-template-columns: 1fr; }
       .table { font-size: 12px; }
       .table th, .table td { padding: 8px; }
+      .login-container { padding: 25px; margin: 15px; }
     }
   </style>
 </head>
 <body>
+  <!-- LOGIN PAGE -->
+  <div id="loginPage">
+    <div class="login-container">
+      <h2>🔐 Business POS</h2>
+      <p class="subtitle">Secure Login System</p>
+
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="switchTab('signin')" id="tabSignin">Sign In</button>
+        <button class="login-tab" onclick="switchTab('signup')" id="tabSignup">Create Account</button>
+      </div>
+
+      <!-- SIGN IN FORM -->
+      <form class="login-form active" id="signinForm" onsubmit="handleSignIn(event)">
+        <div class="form-group">
+          <label for="signinEmail">Email Address</label>
+          <input type="email" id="signinEmail" placeholder="Enter your email" required />
+        </div>
+        <div class="form-group">
+          <label for="signinPassword">Password</label>
+          <input type="password" id="signinPassword" placeholder="Enter your password" required />
+        </div>
+        <button type="submit" id="signinBtn">Sign In</button>
+        <div class="login-footer">
+          <a onclick="showForgotPassword()">Forgot password?</a>
+        </div>
+      </form>
+
+      <!-- SIGN UP FORM -->
+      <form class="login-form" id="signupForm" onsubmit="handleSignUp(event)">
+        <div class="form-group">
+          <label for="signupName">Full Name</label>
+          <input type="text" id="signupName" placeholder="Enter your full name" required />
+        </div>
+        <div class="form-group">
+          <label for="signupEmail">Email Address</label>
+          <input type="email" id="signupEmail" placeholder="Enter your email" required />
+        </div>
+        <div class="form-group">
+          <label for="signupPassword">Password</label>
+          <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" oninput="checkPasswordStrength()" />
+          <div class="password-strength" id="passwordStrength"></div>
+        </div>
+        <div class="form-group">
+          <label for="signupConfirmPassword">Confirm Password</label>
+          <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required />
+        </div>
+        <button type="submit" id="signupBtn">Create Account</button>
+      </form>
+
+      <!-- FORGOT PASSWORD FORM -->
+      <form class="login-form" id="forgotForm" onsubmit="handleForgotPassword(event)">
+        <div class="form-group">
+          <label for="forgotEmail">Email Address</label>
+          <input type="email" id="forgotEmail" placeholder="Enter your email" required />
+        </div>
+        <button type="submit" id="forgotBtn">Send Reset Link</button>
+        <div class="login-footer">
+          <a onclick="backToSignIn()">Back to Sign In</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="sync-status online" id="syncStatus">● Online</div>
-  
+
   <header>
     <h1 id="businessName">Business POS System</h1>
-    <button class="btn-small btn-secondary" onclick="editBusinessName()" style="margin-top: 10px;">Edit Name</button>
+    <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 10px;">
+      <button class="btn-small btn-secondary" onclick="editBusinessName()">Edit Name</button>
+      <div class="user-info" id="userInfo" style="display: none;">
+        <span id="userDisplayName"></span>
+        <button class="btn-small btn-secondary" onclick="signOutUser()">Logout</button>
+      </div>
+    </div>
   </header>
 
-  <div class="container">
+  <div class="container" id="mainApp" style="display: none;">
     <!-- DASHBOARD -->
     <div class="dashboard">
       <div class="stat-card" onclick="scrollToSection('sales-history')">
@@ -241,6 +427,7 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
   <script>
     // Firebase Configuration - WEB APP
@@ -257,9 +444,9 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
     // CRITICAL FIX #1: Enable offline persistence for web
-    // This MUST be called before any other Firestore operations
     db.enablePersistence({ synchronizeTabs: true })
       .then(() => {
         console.log("✅ Firestore offline persistence enabled");
@@ -278,6 +465,193 @@
     let sales = [];
     let editingProductId = null;
     let unsubscribers = [];
+    let currentUser = null;
+
+    // ============ AUTH STATE LISTENER ============
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        currentUser = user;
+        showMainApp();
+        setupListeners();
+      } else {
+        currentUser = null;
+        showLoginPage();
+        // Clear listeners when logged out
+        unsubscribers.forEach(unsub => unsub());
+        unsubscribers = [];
+      }
+    });
+
+    // ============ LOGIN PAGE FUNCTIONS ============
+    function switchTab(tab) {
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+
+      if (tab === 'signin') {
+        document.getElementById('tabSignin').classList.add('active');
+        document.getElementById('signinForm').classList.add('active');
+      } else if (tab === 'signup') {
+        document.getElementById('tabSignup').classList.add('active');
+        document.getElementById('signupForm').classList.add('active');
+      }
+    }
+
+    function showForgotPassword() {
+      document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('forgotForm').classList.add('active');
+    }
+
+    function backToSignIn() {
+      switchTab('signin');
+    }
+
+    function checkPasswordStrength() {
+      const password = document.getElementById('signupPassword').value;
+      const strengthBar = document.getElementById('passwordStrength');
+
+      if (password.length === 0) {
+        strengthBar.className = 'password-strength';
+        return;
+      }
+
+      let strength = 0;
+      if (password.length >= 6) strength++;
+      if (password.length >= 10) strength++;
+      if (/[A-Z]/.test(password)) strength++;
+      if (/[0-9]/.test(password)) strength++;
+      if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+      strengthBar.className = 'password-strength';
+      if (strength <= 2) {
+        strengthBar.classList.add('strength-weak');
+      } else if (strength <= 4) {
+        strengthBar.classList.add('strength-medium');
+      } else {
+        strengthBar.classList.add('strength-strong');
+      }
+    }
+
+    async function handleSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('signinEmail').value.trim();
+      const password = document.getElementById('signinPassword').value;
+      const btn = document.getElementById('signinBtn');
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast('Welcome back!', 'success');
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    async function handleSignUp(e) {
+      e.preventDefault();
+      const name = document.getElementById('signupName').value.trim();
+      const email = document.getElementById('signupEmail').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirmPassword = document.getElementById('signupConfirmPassword').value;
+      const btn = document.getElementById('signupBtn');
+
+      if (password !== confirmPassword) {
+        showToast('Passwords do not match!', 'error');
+        return;
+      }
+
+      if (password.length < 6) {
+        showToast('Password must be at least 6 characters.', 'error');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: name });
+
+        // Save user info to Firestore
+        await db.collection('users').doc(userCredential.user.uid).set({
+          name: name,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast('Account created successfully!', 'success');
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/email-already-in-use') msg = 'An account with this email already exists.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        else if (err.code === 'auth/weak-password') msg = 'Password is too weak.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    }
+
+    async function handleForgotPassword(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const btn = document.getElementById('forgotBtn');
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showToast('Password reset email sent! Check your inbox.', 'success');
+        backToSignIn();
+      } catch (err) {
+        let msg = err.message;
+        if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
+        else if (err.code === 'auth/invalid-email') msg = 'Invalid email address.';
+        showToast(msg, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Reset Link';
+      }
+    }
+
+    async function signOutUser() {
+      try {
+        await auth.signOut();
+        showToast('Logged out successfully', 'success');
+      } catch (err) {
+        showToast('Error signing out: ' + err.message, 'error');
+      }
+    }
+
+    function showLoginPage() {
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('userInfo').style.display = 'none';
+      // Reset forms
+      document.getElementById('signinForm').reset();
+      document.getElementById('signupForm').reset();
+      document.getElementById('forgotForm').reset();
+      document.getElementById('passwordStrength').className = 'password-strength';
+      switchTab('signin');
+    }
+
+    function showMainApp() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('userInfo').style.display = 'flex';
+      document.getElementById('userDisplayName').textContent = currentUser.displayName || currentUser.email;
+    }
 
     // ============ BUSINESS NAME ============
     let businessName = localStorage.getItem("businessName") || "Business POS System";
@@ -305,20 +679,20 @@
       }
     }
 
-    // Listen for network changes
     window.addEventListener('online', () => updateSyncStatus(true));
     window.addEventListener('offline', () => updateSyncStatus(false));
     updateSyncStatus(navigator.onLine);
 
     // ============ LOCAL STORAGE BACKUP ============
     function saveToLocal() {
-      localStorage.setItem("pos_products_backup", JSON.stringify(products));
-      localStorage.setItem("pos_sales_backup", JSON.stringify(sales));
+      localStorage.setItem("pos_products_backup_" + currentUser.uid, JSON.stringify(products));
+      localStorage.setItem("pos_sales_backup_" + currentUser.uid, JSON.stringify(sales));
     }
 
     function loadFromLocal() {
-      const savedProducts = localStorage.getItem("pos_products_backup");
-      const savedSales = localStorage.getItem("pos_sales_backup");
+      if (!currentUser) return;
+      const savedProducts = localStorage.getItem("pos_products_backup_" + currentUser.uid);
+      const savedSales = localStorage.getItem("pos_sales_backup_" + currentUser.uid);
       if (savedProducts) {
         products = JSON.parse(savedProducts);
         console.log("📦 Loaded", products.length, "products from local backup");
@@ -335,46 +709,47 @@
 
     // ============ LOAD DATA ============
     function setupListeners() {
-      // Clear any existing listeners
+      if (!currentUser) return;
+
       unsubscribers.forEach(unsub => unsub());
       unsubscribers = [];
 
-      // CRITICAL FIX #2: Load from local backup FIRST so UI shows data immediately
       loadFromLocal();
 
-      // Then set up Firestore listeners
-      const productsUnsub = db.collection("products").onSnapshot(snapshot => {
-        products = [];
-        snapshot.forEach(doc => {
-          products.push({ id: doc.id, ...doc.data() });
+      const productsUnsub = db.collection("products")
+        .where("userId", "==", currentUser.uid)
+        .onSnapshot(snapshot => {
+          products = [];
+          snapshot.forEach(doc => {
+            products.push({ id: doc.id, ...doc.data() });
+          });
+          console.log("🔥 Firestore products loaded:", products.length);
+          saveToLocal();
+          updateProductUI();
+          updateStockTable();
+          updateDashboard();
+        }, err => {
+          console.error("Products listener error:", err);
         });
-        console.log("🔥 Firestore products loaded:", products.length);
-        saveToLocal(); // Backup to localStorage
-        updateProductUI();
-        updateStockTable();
-        updateDashboard();
-      }, err => {
-        console.error("Products listener error:", err);
-        // Already loaded from local above, so UI still works
-      });
 
-      const salesUnsub = db.collection("sales").orderBy("date", "desc").onSnapshot(snapshot => {
-        sales = [];
-        snapshot.forEach(doc => {
-          sales.push({ id: doc.id, ...doc.data() });
+      const salesUnsub = db.collection("sales")
+        .where("userId", "==", currentUser.uid)
+        .orderBy("date", "desc")
+        .onSnapshot(snapshot => {
+          sales = [];
+          snapshot.forEach(doc => {
+            sales.push({ id: doc.id, ...doc.data() });
+          });
+          console.log("🔥 Firestore sales loaded:", sales.length);
+          saveToLocal();
+          updateSalesTable();
+          updateDashboard();
+        }, err => {
+          console.error("Sales listener error:", err);
         });
-        console.log("🔥 Firestore sales loaded:", sales.length);
-        saveToLocal();
-        updateSalesTable();
-        updateDashboard();
-      }, err => {
-        console.error("Sales listener error:", err);
-      });
 
       unsubscribers.push(productsUnsub, salesUnsub);
     }
-    // Setup listeners immediately (persistence already enabled above)
-    setupListeners();
 
     // ============ VALIDATION ============
     function showError(id, show) {
@@ -385,23 +760,24 @@
       const name = document.getElementById("productName").value.trim();
       const price = parseFloat(document.getElementById("productPrice").value);
       const stock = parseInt(document.getElementById("productStock").value);
-      
+
       let valid = true;
-      
+
       if (!name || name.length < 1) { showError("nameError", true); valid = false; }
       else { showError("nameError", false); }
-      
+
       if (isNaN(price) || price < 0) { showError("priceError", true); valid = false; }
       else { showError("priceError", false); }
-      
+
       if (isNaN(stock) || stock < 0) { showError("stockError", true); valid = false; }
       else { showError("stockError", false); }
-      
+
       return valid ? { name, price, stock } : null;
     }
 
     // ============ ADD PRODUCT ============
     async function addProduct() {
+      if (!currentUser) { showToast("Please log in first", "error"); return; }
       const data = validateProduct();
       if (!data) return;
 
@@ -414,6 +790,7 @@
           name: data.name,
           price: data.price,
           stock: data.stock,
+          userId: currentUser.uid,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -496,7 +873,7 @@
         if (p.stock <= 0) option.disabled = true;
         select.appendChild(option);
       });
-      
+
       if (currentVal && products.find(p => p.id === currentVal)) {
         select.value = currentVal;
       }
@@ -505,7 +882,7 @@
     function updateStockTable() {
       const tbody = document.getElementById("stockBody");
       const searchTerm = document.getElementById("stockSearch").value.toLowerCase();
-      
+
       let filtered = products;
       if (searchTerm) {
         filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm));
@@ -539,7 +916,7 @@
     function updateSalesTable() {
       const tbody = document.getElementById("salesBody");
       const searchTerm = document.getElementById("salesSearch").value.toLowerCase();
-      
+
       let filtered = sales;
       if (searchTerm) {
         filtered = sales.filter(s => s.product.toLowerCase().includes(searchTerm));
@@ -565,7 +942,7 @@
           </tr>
         `;
       }).join("");
-      
+
       document.getElementById("filteredCount").textContent = `Showing ${filtered.length} of ${sales.length} sales`;
     }
 
@@ -603,6 +980,7 @@
 
     // ============ MAKE SALE ============
     async function makeSale() {
+      if (!currentUser) { showToast("Please log in first", "error"); return; }
       const productId = document.getElementById("productSelect").value;
       const qty = parseInt(document.getElementById("quantity").value);
       const total = parseFloat(document.getElementById("finalPrice").value.replace(/[^0-9.]/g, '')) || 0;
@@ -624,18 +1002,17 @@
       btn.textContent = "Processing...";
 
       try {
-        // Use transaction to ensure atomicity
         await db.runTransaction(async (transaction) => {
           const productRef = db.collection("products").doc(productId);
           const productDoc = await transaction.get(productRef);
-          
+
           if (!productDoc.exists) throw new Error("Product not found");
-          
+
           const currentStock = productDoc.data().stock;
           if (qty > currentStock) throw new Error("Not enough stock");
-          
+
           transaction.update(productRef, { stock: currentStock - qty });
-          
+
           const saleRef = db.collection("sales").doc();
           transaction.set(saleRef, {
             product: product.name,
@@ -643,6 +1020,7 @@
             price: product.price,
             discount: discountAmount,
             total,
+            userId: currentUser.uid,
             date: firebase.firestore.FieldValue.serverTimestamp()
           });
         });
@@ -653,7 +1031,7 @@
         document.getElementById("discountType").value = "none";
         document.getElementById("finalPrice").value = "";
         delete document.getElementById("finalPrice").dataset.discountAmount;
-        
+
         showToast("Sale completed successfully!", "success");
       } catch (err) {
         showToast("Error: " + err.message, "error");
@@ -718,7 +1096,8 @@
           s.discount.toFixed(2),
           s.total.toFixed(2)
         ])
-      ].map(row => row.join(",")).join("\n");
+      ].map(row => row.join(",")).join("
+");
 
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
@@ -748,7 +1127,7 @@
     ["discountType", "discountValue", "quantity"].forEach(id => {
       document.getElementById(id).addEventListener("input", calculatePrice);
     });
-    
+
     document.getElementById("productSelect").addEventListener("change", calculatePrice);
 
     document.getElementById("editModal").addEventListener("click", (e) => {
