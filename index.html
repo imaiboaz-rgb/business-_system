@@ -33,12 +33,12 @@
   <h1>Enterprise POS v2</h1>
 </header><div class="container">  <!-- LOGIN -->  <div id="loginBox" class="card">
     <h3>Login</h3>
-    <input id="email" placeholder="Email" />
+    <input id="email" type="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
     <button onclick="login()">Sign In</button>
     <button onclick="signup()" style="margin-top:8px;background:#7c3aed">Create Account</button>
   </div>  <!-- APP -->  <div id="app" class="hidden"><div class="top">
-  <div id="user"></div>
+  <div id="userDisplay"></div>
   <button onclick="logout()" style="width:auto;background:#ef4444">Logout</button>
 </div>
 
@@ -56,13 +56,13 @@
   <h3>Products</h3>
   <table>
     <thead><tr><th>Name</th><th>Price</th><th>Stock</th></tr></thead>
-    <tbody id="products"></tbody>
+    <tbody id="productsTable"></tbody>
   </table>
 </div>
 
   </div></div><div class="toast" id="toast"></div><!-- Firebase --><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
 
-// ===== FIREBASE CONFIG (YOUR PROJECT) =====
+// ===== FIREBASE CONFIG =====
 const firebaseConfig = {
   apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
   authDomain: "business-pro-d657d.firebaseapp.com",
@@ -77,35 +77,50 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let user = null;
-let products = [];
+let currentUser = null;
+let productsData = [];
+
+const loginBox = document.getElementById('loginBox');
+const appBox = document.getElementById('app');
+const userDisplay = document.getElementById('userDisplay');
+const productsTable = document.getElementById('productsTable');
+const toastEl = document.getElementById('toast');
 
 // AUTH
-auth.onAuthStateChanged(u => {
-  user = u;
-  if (u) {
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+
+  if (user) {
     loginBox.classList.add('hidden');
-    app.classList.remove('hidden');
-    user.innerText = u.email;
-    load();
+    appBox.classList.remove('hidden');
+    userDisplay.innerText = user.email;
+    loadProducts();
   } else {
     loginBox.classList.remove('hidden');
-    app.classList.add('hidden');
+    appBox.classList.add('hidden');
   }
 });
 
 async function login() {
   try {
-    await auth.signInWithEmailAndPassword(email.value, password.value);
-    toast("Logged in");
-  } catch (e) { toast(e.message); }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    await auth.signInWithEmailAndPassword(email, password);
+    showToast("Logged in");
+  } catch (e) {
+    showToast(e.message);
+  }
 }
 
 async function signup() {
   try {
-    await auth.createUserWithEmailAndPassword(email.value, password.value);
-    toast("Account created");
-  } catch (e) { toast(e.message); }
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    await auth.createUserWithEmailAndPassword(email, password);
+    showToast("Account created");
+  } catch (e) {
+    showToast(e.message);
+  }
 }
 
 function logout() {
@@ -114,29 +129,30 @@ function logout() {
 
 // PRODUCTS
 async function addProduct() {
-  if (!user) return;
+  if (!currentUser) return;
 
   await db.collection("products").add({
-    name: pName.value,
-    price: +pPrice.value,
-    stock: +pStock.value,
-    uid: user.uid
+    name: document.getElementById('pName').value,
+    price: Number(document.getElementById('pPrice').value),
+    stock: Number(document.getElementById('pStock').value),
+    uid: currentUser.uid,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  toast("Product added");
+  showToast("Product added");
 }
 
-function load() {
+function loadProducts() {
   db.collection("products")
-    .where("uid", "==", user.uid)
-    .onSnapshot(snap => {
-      products = snap.docs.map(d => d.data());
-      render();
+    .where("uid", "==", currentUser.uid)
+    .onSnapshot(snapshot => {
+      productsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderProducts();
     });
 }
 
-function render() {
-  products.innerHTML = products.map(p => `
+function renderProducts() {
+  productsTable.innerHTML = productsData.map(p => `
     <tr>
       <td>${p.name}</td>
       <td>${p.price}</td>
@@ -145,13 +161,11 @@ function render() {
   `).join('');
 }
 
-function toast(msg) {
+function showToast(msg) {
   toastEl.innerText = msg;
   toastEl.classList.add('show');
   setTimeout(() => toastEl.classList.remove('show'), 2000);
 }
-
-const toastEl = document.getElementById('toast');
 
 </script></body>
 </html>
