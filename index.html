@@ -3,36 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise POS v5</title>
+<title>Enterprise POS v6 - Approval System</title>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#0b1220;color:#fff}
+body{margin:0;font-family:Segoe UI;background:#0b1220;color:#e5e7eb}
 header{padding:16px;text-align:center;background:linear-gradient(135deg,#2563eb,#7c3aed)}
-.container{max-width:1100px;margin:auto;padding:15px}
-.card{background:#111827;padding:15px;margin-bottom:10px;border-radius:10px}
-input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#fff}
-button{background:#2563eb;border:none;cursor:pointer}
+.container{max-width:1100px;margin:auto;padding:16px}
+
+.card{background:#111827;padding:16px;margin-bottom:12px;border-radius:12px}
+
+input,select,button{
+width:100%;padding:10px;margin-top:8px;border-radius:8px;
+border:1px solid #334155;background:#0b1220;color:#fff}
+
+button{background:#2563eb;border:none;cursor:pointer;font-weight:600}
 button:hover{background:#1d4ed8}
+
 .hidden{display:none}
+
 table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:8px;border-bottom:1px solid #1f2937}
+th,td{padding:10px;border-bottom:1px solid #1f2937}
+th{background:#111827}
+
 .badge{padding:4px 8px;border-radius:6px;font-size:12px}
-.low{background:#f59e0b}
-.out{background:#ef4444}
-.ok{background:#22c55e}
+.pending{background:#f59e0b}
+.approved{background:#22c55e}
+.rejected{background:#ef4444}
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>Enterprise POS v5</h2>
+<h2>Enterprise POS v6 (Admin Approval System)</h2>
 </header>
 
 <div class="container">
 
 <!-- LOGIN -->
-<div class="card" id="loginBox">
+<div id="loginBox" class="card">
 <h3>Login</h3>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
@@ -45,46 +54,48 @@ th,td{padding:8px;border-bottom:1px solid #1f2937}
 
 <div class="card">
 <h3 id="userInfo"></h3>
-<button onclick="logout()" style="background:red">Logout</button>
+<button onclick="logout()" style="background:#ef4444">Logout</button>
 </div>
 
-<!-- PRODUCTS -->
+<!-- INVENTORY -->
 <div class="card">
 <h3>Inventory</h3>
 <table>
-<thead><tr><th>Product</th><th>Price</th><th>Stock</th><th>Status</th></tr></thead>
+<thead>
+<tr><th>Name</th><th>Price</th><th>Stock</th></tr>
+</thead>
 <tbody id="productTable"></tbody>
 </table>
 </div>
 
-<!-- SALE -->
+<!-- CASHIER REQUEST STOCK -->
 <div class="card">
-<h3>Make Sale</h3>
+<h3>Request Stock Change (Cashier)</h3>
 
 <select id="productSelect"></select>
+<input id="newStock" type="number" placeholder="Requested Stock">
+<input id="reason" placeholder="Reason (optional)">
+<button onclick="requestStock()">Send Request</button>
+</div>
+
+<!-- SALES -->
+<div class="card">
+<h3>Make Sale</h3>
+<select id="saleProduct"></select>
 <input id="qty" type="number" placeholder="Quantity">
+<button onclick="makeSale()">Sell</button>
+</div>
 
-<select id="payment">
-<option>cash</option>
-<option>mpesa</option>
-<option>card</option>
-</select>
-
-<input id="deposit" type="number" placeholder="Deposit">
-
-<button onclick="makeSale()">Complete Sale</button>
+<!-- ADMIN PANEL -->
+<div class="card" id="adminPanel">
+<h3>Admin Approval Panel</h3>
+<div id="requests"></div>
 </div>
 
 <!-- RECEIPT -->
 <div class="card">
-<h3>Last Receipt</h3>
+<h3>Receipt</h3>
 <pre id="receipt"></pre>
-</div>
-
-<!-- ADMIN ONLY -->
-<div class="card" id="adminPanel">
-<h3>Admin Stock Approvals</h3>
-<div id="requests"></div>
 </div>
 
 </div>
@@ -97,7 +108,7 @@ th,td{padding:8px;border-bottom:1px solid #1f2937}
 
 <script>
 
-// ===== FIREBASE CONFIG =====
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
   authDomain: "business-pro-d657d.firebaseapp.com",
@@ -111,106 +122,164 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let user, role="cashier";
+let role = "cashier";
 
-// ===== AUTH =====
+// ================= AUTH =================
 auth.onAuthStateChanged(async u=>{
-  if(!u){
-    location.reload();
-    return;
+  if(u){
+    loginBox.classList.add("hidden");
+    app.classList.remove("hidden");
+
+    userInfo.innerText = u.email;
+
+    const userDoc = await db.collection("users").doc(u.uid).get();
+    role = userDoc.data()?.role || "cashier";
+
+    if(role !== "admin"){
+      document.getElementById("adminPanel").style.display = "none";
+    } else {
+      listenRequests();
+    }
+
+    loadProducts();
   }
-
-  user=u;
-
-  document.getElementById("loginBox").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  document.getElementById("userInfo").innerText=u.email;
-
-  const doc=await db.collection("users").doc(u.uid).get();
-  role=doc.data()?.role || "cashier";
-
-  if(role!=="admin"){
-    document.getElementById("adminPanel").style.display="none";
-  }
-
-  load();
 });
 
-// ===== LOGIN =====
 async function login(){
   await auth.signInWithEmailAndPassword(email.value,password.value);
 }
 
 async function signup(){
-  const res=await auth.createUserWithEmailAndPassword(email.value,password.value);
-  await db.collection("users").doc(res.user.uid).set({role:"cashier"});
-}
+  const res = await auth.createUserWithEmailAndPassword(email.value,password.value);
 
-// ===== LOAD =====
-function load(){
-  db.collection("products").onSnapshot(s=>{
-    let html="", opt="";
-
-    s.forEach(d=>{
-      let p=d.data();
-
-      let status="ok";
-      if(p.stock<=0) status="out";
-      else if(p.stock<=10) status="low";
-
-      html+=`
-      <tr>
-        <td>${p.name}</td>
-        <td>${p.price}</td>
-        <td>${p.stock}</td>
-        <td><span class="badge ${status}">${status}</span></td>
-      </tr>`;
-
-      opt+=`<option value="${d.id}">${p.name}</option>`;
-    });
-
-    productTable.innerHTML=html;
-    productSelect.innerHTML=opt;
+  await db.collection("users").doc(res.user.uid).set({
+    role:"cashier"
   });
-}
-
-// ===== SALE WITH DEPOSIT =====
-async function makeSale(){
-  const id=productSelect.value;
-  const qty=+qty.value;
-  const dep=+deposit.value||0;
-  const method=payment.value;
-
-  const p=await db.collection("products").doc(id).get();
-  const data=p.data();
-
-  const total=data.price*qty;
-  const balance=total-dep;
-
-  await db.collection("sales").add({
-    product:data.name,
-    qty,
-    total,
-    deposit:dep,
-    balance,
-    payment:method,
-    uid:user.uid
-  });
-
-  document.getElementById("receipt").innerText=`
-PRODUCT: ${data.name}
-QTY: ${qty}
-TOTAL: ${total}
-DEPOSIT: ${dep}
-BALANCE: ${balance}
-PAYMENT: ${method}
-`;
-
-  alert("Sale complete");
 }
 
 function logout(){auth.signOut();}
-</script>
 
+// ================= PRODUCTS =================
+function loadProducts(){
+  db.collection("products").onSnapshot(s=>{
+    let html="";
+    let options="";
+
+    s.forEach(d=>{
+      const p=d.data();
+
+      html+=`<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td></tr>`;
+      options+=`<option value="${d.id}">${p.name}</option>`;
+    });
+
+    productSelect.innerHTML=options;
+    saleProduct.innerHTML=options;
+    productTable.innerHTML=html;
+  });
+}
+
+// ================= CASHIER REQUEST STOCK =================
+async function requestStock(){
+  const id = productSelect.value;
+
+  const p = await db.collection("products").doc(id).get();
+
+  await db.collection("stockRequests").add({
+    productId:id,
+    productName:p.data().name,
+    oldStock:p.data().stock,
+    newStock:+newStock.value,
+    reason:reason.value,
+    status:"pending",
+    requestedBy:auth.currentUser.uid,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  alert("Request sent to admin");
+}
+
+// ================= ADMIN APPROVAL =================
+function listenRequests(){
+  db.collection("stockRequests")
+    .where("status","==","pending")
+    .onSnapshot(s=>{
+      let html="";
+
+      s.forEach(d=>{
+        const r=d.data();
+
+        html+=`
+        <div class="card">
+          <b>${r.productName}</b><br>
+          Old: ${r.oldStock} → New: ${r.newStock}<br>
+          Reason: ${r.reason || "none"}<br>
+
+          <button onclick="approve('${d.id}','${r.productId}',${r.newStock})"
+            style="background:#22c55e;margin-top:6px">
+            Approve
+          </button>
+
+          <button onclick="reject('${d.id}')"
+            style="background:#ef4444;margin-top:6px">
+            Reject
+          </button>
+        </div>`;
+      });
+
+      requests.innerHTML = html;
+    });
+}
+
+async function approve(id,productId,newStock){
+  const batch = db.batch();
+
+  batch.update(db.collection("products").doc(productId),{
+    stock:newStock
+  });
+
+  batch.update(db.collection("stockRequests").doc(id),{
+    status:"approved"
+  });
+
+  await batch.commit();
+
+  alert("Stock approved");
+}
+
+async function reject(id){
+  await db.collection("stockRequests").doc(id).update({
+    status:"rejected"
+  });
+
+  alert("Rejected");
+}
+
+// ================= SALES =================
+async function makeSale(){
+  const id = saleProduct.value;
+  const qty = +document.getElementById("qty").value;
+
+  const p = await db.collection("products").doc(id).get();
+
+  const total = p.data().price * qty;
+
+  await db.collection("sales").add({
+    product:p.data().name,
+    qty,
+    total,
+    date:new Date().toISOString()
+  });
+
+  receipt.innerText =
+`RECEIPT
+-----------------
+Item: ${p.data().name}
+Qty: ${qty}
+Total: ${total}`;
+
+  alert("Sale completed");
+}
+
+</script>
 </body>
 </html>
