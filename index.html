@@ -1,86 +1,103 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Enterprise POS v2 - Roles Enabled</title>  <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Segoe UI,Arial;background:#0b1220;color:#e5e7eb}
-    header{padding:16px;text-align:center;background:linear-gradient(135deg,#2563eb,#7c3aed)}
-    header h1{margin:0;font-size:22px}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Enterprise POS v4</title>
 
-    .container{max-width:1100px;margin:auto;padding:16px}
+<style>
+body{margin:0;font-family:Segoe UI;background:#0b1220;color:#e5e7eb}
+header{padding:15px;text-align:center;background:linear-gradient(135deg,#2563eb,#7c3aed)}
+.container{max-width:1100px;margin:auto;padding:15px}
+.card{background:#111827;padding:15px;margin-bottom:10px;border-radius:10px}
+input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#fff}
+button{background:#2563eb;border:none;cursor:pointer}
+button:hover{background:#1d4ed8}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #1f2937}
+</style>
+</head>
 
-    .card{background:#111827;padding:16px;border-radius:12px;margin-bottom:12px;border:1px solid #1f2937}
+<body>
 
-    input,button,select{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid #334155;background:#0b1220;color:#fff}
+<header>
+<h2>Enterprise POS v4</h2>
+</header>
 
-    button{background:#2563eb;border:none;font-weight:600;cursor:pointer}
-    button:hover{background:#1d4ed8}
+<div class="container">
 
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
-    table{width:100%;border-collapse:collapse;margin-top:10px}
-    th,td{padding:10px;border-bottom:1px solid #1f2937}
-    th{background:#111827}
-
-    .hidden{display:none}
-    .top{display:flex;justify-content:space-between;align-items:center}
-
-    .badge{padding:4px 8px;border-radius:6px;font-size:12px}
-    .admin{background:#22c55e;color:#000}
-    .cashier{background:#f59e0b;color:#000}
-
-    .toast{position:fixed;bottom:20px;right:20px;background:#111827;padding:10px 14px;border-radius:8px;opacity:0;transition:.3s}
-    .toast.show{opacity:1}
-  </style></head>
-<body><header>
-  <h1>Enterprise POS v2</h1>
-</header><div class="container">  <!-- LOGIN -->  <div id="loginBox" class="card">
-    <h3>Login</h3>
-    <input id="email" type="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Password" />
-    <select id="roleSelect">
-      <option value="cashier">Cashier</option>
-      <option value="admin">Admin</option>
-    </select>
-    <button onclick="signup()">Create Account</button>
-    <button onclick="login()" style="margin-top:8px;background:#7c3aed">Sign In</button>
-  </div>  <!-- APP -->  <div id="app" class="hidden"><div class="top">
-  <div>
-    <span id="userDisplay"></span>
-    <span id="roleBadge" class="badge"></span>
-  </div>
-  <button onclick="logout()" style="width:auto;background:#ef4444">Logout</button>
+<!-- LOGIN -->
+<div id="loginBox" class="card">
+<h3>Login</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="signup()" style="background:#7c3aed">Sign Up</button>
 </div>
 
-<!-- DASHBOARD (ADMIN ONLY) -->
-<div id="dashboard" class="card hidden">
-  <h3>Admin Dashboard</h3>
-  <p>Total Products: <span id="totalProducts">0</span></p>
-  <p>Total Stock: <span id="totalStock">0</span></p>
-</div>
-
-<!-- ADD PRODUCT (ADMIN ONLY) -->
-<div id="addProductCard" class="card hidden">
-  <h3>Add Product</h3>
-  <input id="pName" placeholder="Name" />
-  <div class="row">
-    <input id="pPrice" type="number" placeholder="Price" />
-    <input id="pStock" type="number" placeholder="Stock" />
-  </div>
-  <button onclick="addProduct()">Add</button>
-</div>
+<!-- APP -->
+<div id="app" class="hidden">
 
 <div class="card">
-  <h3>Products</h3>
-  <table>
-    <thead><tr><th>Name</th><th>Price</th><th>Stock</th></tr></thead>
-    <tbody id="productsTable"></tbody>
-  </table>
+<h3 id="userInfo"></h3>
+<button onclick="logout()" style="background:#ef4444">Logout</button>
 </div>
 
-  </div></div><div class="toast" id="toast"></div><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script><script>
+<!-- PRODUCTS -->
+<div class="card">
+<h3>Products</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Price</th><th>Stock</th></tr>
+</thead>
+<tbody id="productTable"></tbody>
+</table>
+</div>
 
+<!-- MAKE SALE -->
+<div class="card">
+<h3>Make Sale</h3>
+
+<select id="productSelect"></select>
+<input id="qty" type="number" placeholder="Quantity">
+
+<select id="paymentMethod">
+<option value="cash">Cash</option>
+<option value="mpesa">M-Pesa</option>
+<option value="card">Card</option>
+</select>
+
+<input id="deposit" type="number" placeholder="Deposit (optional)">
+
+<button onclick="makeSale()">Complete Sale</button>
+</div>
+
+<!-- STOCK REQUEST (CASHIER) -->
+<div class="card">
+<h3>Request Stock Change</h3>
+<select id="reqProduct"></select>
+<input id="reqStock" type="number" placeholder="New Stock">
+<button onclick="requestStock()">Send Request</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="card" id="adminPanel">
+<h3>Admin Stock Approvals</h3>
+<div id="requests"></div>
+</div>
+
+</div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script>
+
+// 🔥 FIREBASE CONFIG (YOUR PROJECT)
 const firebaseConfig = {
   apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
   authDomain: "business-pro-d657d.firebaseapp.com",
@@ -94,101 +111,137 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-let currentUser=null;
+let user=null;
 let role="cashier";
-let productsData=[];
 
-const loginBox=document.getElementById('loginBox');
-const appBox=document.getElementById('app');
-
-// AUTH STATE
+// AUTH
 auth.onAuthStateChanged(async u=>{
-  currentUser=u;
-
   if(u){
-    loginBox.classList.add('hidden');
-    appBox.classList.remove('hidden');
+    user=u;
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
 
-    const userDoc=await db.collection('users').doc(u.uid).get();
-    role=userDoc.exists?userDoc.data().role:"cashier";
+    document.getElementById("userInfo").innerText=u.email;
 
-    document.getElementById('userDisplay').innerText=u.email;
-    document.getElementById('roleBadge').innerText=role;
-    document.getElementById('roleBadge').className="badge "+role;
+    const doc=await db.collection("users").doc(u.uid).get();
+    role=doc.data()?.role || "cashier";
 
-    if(role=="admin"){
-      document.getElementById('dashboard').classList.remove('hidden');
-      document.getElementById('addProductCard').classList.remove('hidden');
+    if(role!=="admin"){
+      document.getElementById("adminPanel").style.display="none";
     }
 
     loadProducts();
+    loadRequests();
   }else{
-    loginBox.classList.remove('hidden');
-    appBox.classList.add('hidden');
+    location.reload();
   }
 });
 
-async function signup(){
-  const u=await auth.createUserWithEmailAndPassword(email.value,password.value);
-  await db.collection('users').doc(u.user.uid).set({
-    role:roleSelect.value,
-    email:u.user.email
-  });
-  toast("Account created");
-}
-
+// LOGIN
 async function login(){
   await auth.signInWithEmailAndPassword(email.value,password.value);
-  toast("Logged in");
+}
+
+async function signup(){
+  const res=await auth.createUserWithEmailAndPassword(email.value,password.value);
+
+  await db.collection("users").doc(res.user.uid).set({
+    role:"cashier"
+  });
+}
+
+// PRODUCTS
+function loadProducts(){
+  db.collection("products").onSnapshot(s=>{
+    let html="";
+    let options="";
+
+    s.forEach(d=>{
+      let p=d.data();
+
+      html+=`<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td></tr>`;
+      options+=`<option value="${d.id}">${p.name}</option>`;
+    });
+
+    productTable.innerHTML=html;
+    productSelect.innerHTML=options;
+    reqProduct.innerHTML=options;
+  });
+}
+
+// SALE
+async function makeSale(){
+  const id=productSelect.value;
+  const qty=+document.getElementById("qty").value;
+  const method=paymentMethod.value;
+  const deposit=+document.getElementById("deposit").value||0;
+
+  const p=await db.collection("products").doc(id).get();
+  const data=p.data();
+
+  const total=data.price*qty;
+  const balance=total-deposit;
+
+  await db.collection("sales").add({
+    product:data.name,
+    qty,
+    total,
+    paymentMethod:method,
+    deposit,
+    balance,
+    uid:user.uid
+  });
+
+  alert("Sale complete");
+}
+
+// STOCK REQUEST
+async function requestStock(){
+  await db.collection("stockRequests").add({
+    productId:reqProduct.value,
+    newStock:+reqStock.value,
+    uid:user.uid,
+    status:"pending"
+  });
+
+  alert("Request sent");
+}
+
+// ADMIN APPROVAL
+function loadRequests(){
+  db.collection("stockRequests").onSnapshot(s=>{
+    let html="";
+
+    s.forEach(async d=>{
+      let r=d.data();
+
+      if(r.status==="pending"){
+        html+=`
+        <div>
+          Product: ${r.productId} | New Stock: ${r.newStock}
+          <button onclick="approve('${d.id}','${r.productId}',${r.newStock})">Approve</button>
+        </div>`;
+      }
+    });
+
+    requests.innerHTML=html;
+  });
+}
+
+async function approve(id,productId,newStock){
+  await db.collection("products").doc(productId).update({
+    stock:newStock
+  });
+
+  await db.collection("stockRequests").doc(id).update({
+    status:"approved"
+  });
+
+  alert("Approved");
 }
 
 function logout(){auth.signOut();}
 
-// PRODUCTS
-async function addProduct(){
-  if(role!="admin")return toast("No permission");
-
-  await db.collection("products").add({
-    name:pName.value,
-    price:+pPrice.value,
-    stock:+pStock.value,
-    uid:currentUser.uid
-  });
-
-  toast("Product added");
-}
-
-function loadProducts(){
-  db.collection("products")
-    .where("uid","==",currentUser.uid)
-    .onSnapshot(s=>{
-      productsData=s.docs.map(d=>d.data());
-      render();
-      updateDashboard();
-    });
-}
-
-function render(){
-  productsTable.innerHTML=productsData.map(p=>`
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.price}</td>
-      <td>${p.stock}</td>
-    </tr>
-  `).join('');
-}
-
-function updateDashboard(){
-  document.getElementById('totalProducts').innerText=productsData.length;
-  document.getElementById('totalStock').innerText=productsData.reduce((a,b)=>a+(b.stock||0),0);
-}
-
-function toast(msg){
-  const t=document.getElementById('toast');
-  t.innerText=msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-</script></body>
+</script>
+</body>
 </html>
