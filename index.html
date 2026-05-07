@@ -3,39 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise POS v6 - Approval System</title>
+<title>Enterprise POS v7 Dashboard</title>
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#0b1220;color:#e5e7eb}
-header{padding:16px;text-align:center;background:linear-gradient(135deg,#2563eb,#7c3aed)}
-.container{max-width:1100px;margin:auto;padding:16px}
+body{
+margin:0;
+font-family:Segoe UI;
+background:#0b1220;
+color:#e5e7eb;
+}
 
-.card{background:#111827;padding:16px;margin-bottom:12px;border-radius:12px}
+header{
+padding:16px;
+text-align:center;
+background:linear-gradient(135deg,#2563eb,#7c3aed);
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:16px;
+}
+
+.card{
+background:#111827;
+padding:16px;
+margin-bottom:14px;
+border-radius:14px;
+box-shadow:0 0 10px rgba(0,0,0,.2);
+}
 
 input,select,button{
-width:100%;padding:10px;margin-top:8px;border-radius:8px;
-border:1px solid #334155;background:#0b1220;color:#fff}
+width:100%;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+border:1px solid #334155;
+background:#0b1220;
+color:#fff;
+}
 
-button{background:#2563eb;border:none;cursor:pointer;font-weight:600}
-button:hover{background:#1d4ed8}
+button{
+background:#2563eb;
+border:none;
+cursor:pointer;
+font-weight:600;
+}
 
-.hidden{display:none}
+button:hover{
+background:#1d4ed8;
+}
 
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:10px;border-bottom:1px solid #1f2937}
-th{background:#111827}
+.hidden{
+display:none;
+}
 
-.badge{padding:4px 8px;border-radius:6px;font-size:12px}
-.pending{background:#f59e0b}
-.approved{background:#22c55e}
-.rejected{background:#ef4444}
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #1f2937;
+text-align:left;
+}
+
+th{
+background:#111827;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:12px;
+margin-top:12px;
+}
+
+.stat{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+text-align:center;
+}
+
+.stat h2{
+margin:10px 0 0;
+font-size:28px;
+}
+
+pre{
+white-space:pre-wrap;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>Enterprise POS v6 (Admin Approval System)</h2>
+<h2>Enterprise POS v7 (Dashboard + Approval System)</h2>
 </header>
 
 <div class="container">
@@ -43,52 +110,107 @@ th{background:#111827}
 <!-- LOGIN -->
 <div id="loginBox" class="card">
 <h3>Login</h3>
+
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
+
 <button onclick="login()">Login</button>
-<button onclick="signup()" style="background:#7c3aed">Sign Up</button>
+
+<button onclick="signup()" style="background:#7c3aed">
+Sign Up
+</button>
 </div>
 
 <!-- APP -->
 <div id="app" class="hidden">
 
+<!-- USER -->
 <div class="card">
 <h3 id="userInfo"></h3>
-<button onclick="logout()" style="background:#ef4444">Logout</button>
+
+<button onclick="logout()" style="background:#ef4444">
+Logout
+</button>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card">
+<h3>Dashboard</h3>
+
+<div class="dashboard">
+
+<div class="stat">
+<h4>Total Products</h4>
+<h2 id="totalProducts">0</h2>
+</div>
+
+<div class="stat">
+<h4>Total Stock</h4>
+<h2 id="totalStock">0</h2>
+</div>
+
+<div class="stat">
+<h4>Total Sales</h4>
+<h2 id="totalSales">0</h2>
+</div>
+
+<div class="stat">
+<h4>Pending Requests</h4>
+<h2 id="pendingRequests">0</h2>
+</div>
+
+</div>
 </div>
 
 <!-- INVENTORY -->
 <div class="card">
 <h3>Inventory</h3>
+
 <table>
 <thead>
-<tr><th>Name</th><th>Price</th><th>Stock</th></tr>
+<tr>
+<th>Name</th>
+<th>Price</th>
+<th>Stock</th>
+</tr>
 </thead>
+
 <tbody id="productTable"></tbody>
 </table>
 </div>
 
-<!-- CASHIER REQUEST STOCK -->
+<!-- REQUEST STOCK -->
 <div class="card">
-<h3>Request Stock Change (Cashier)</h3>
+<h3>Request Stock Change</h3>
 
 <select id="productSelect"></select>
+
 <input id="newStock" type="number" placeholder="Requested Stock">
-<input id="reason" placeholder="Reason (optional)">
-<button onclick="requestStock()">Send Request</button>
+
+<input id="reason" placeholder="Reason">
+
+<button onclick="requestStock()">
+Send Request
+</button>
 </div>
 
 <!-- SALES -->
 <div class="card">
 <h3>Make Sale</h3>
+
 <select id="saleProduct"></select>
+
 <input id="qty" type="number" placeholder="Quantity">
-<button onclick="makeSale()">Sell</button>
+
+<button onclick="makeSale()">
+Sell
+</button>
 </div>
 
-<!-- ADMIN PANEL -->
+<!-- ADMIN -->
 <div class="card" id="adminPanel">
 <h3>Admin Approval Panel</h3>
+
 <div id="requests"></div>
 </div>
 
@@ -119,6 +241,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
@@ -126,128 +249,259 @@ let role = "cashier";
 
 // ================= AUTH =================
 auth.onAuthStateChanged(async u=>{
+
   if(u){
+
     loginBox.classList.add("hidden");
     app.classList.remove("hidden");
 
-    userInfo.innerText = u.email;
+    userInfo.innerText =
+      `Logged in as: ${u.email}`;
 
-    const userDoc = await db.collection("users").doc(u.uid).get();
-    role = userDoc.data()?.role || "cashier";
+    const userDoc =
+      await db.collection("users")
+      .doc(u.uid)
+      .get();
+
+    role =
+      userDoc.data()?.role || "cashier";
 
     if(role !== "admin"){
-      document.getElementById("adminPanel").style.display = "none";
-    } else {
+      adminPanel.style.display = "none";
+    }else{
       listenRequests();
     }
 
     loadProducts();
+    loadDashboard();
   }
 });
 
 async function login(){
-  await auth.signInWithEmailAndPassword(email.value,password.value);
+
+  await auth.signInWithEmailAndPassword(
+    email.value,
+    password.value
+  );
 }
 
 async function signup(){
-  const res = await auth.createUserWithEmailAndPassword(email.value,password.value);
 
-  await db.collection("users").doc(res.user.uid).set({
+  const res =
+    await auth.createUserWithEmailAndPassword(
+      email.value,
+      password.value
+    );
+
+  await db.collection("users")
+  .doc(res.user.uid)
+  .set({
     role:"cashier"
   });
+
+  alert("Account created");
 }
 
-function logout(){auth.signOut();}
+function logout(){
+  auth.signOut();
+}
 
 // ================= PRODUCTS =================
 function loadProducts(){
-  db.collection("products").onSnapshot(s=>{
-    let html="";
-    let options="";
+
+  db.collection("products")
+  .onSnapshot(s=>{
+
+    let html = "";
+    let options = "";
 
     s.forEach(d=>{
-      const p=d.data();
 
-      html+=`<tr><td>${p.name}</td><td>${p.price}</td><td>${p.stock}</td></tr>`;
-      options+=`<option value="${d.id}">${p.name}</option>`;
+      const p = d.data();
+
+      html += `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.price}</td>
+        <td>${p.stock}</td>
+      </tr>
+      `;
+
+      options += `
+      <option value="${d.id}">
+      ${p.name}
+      </option>
+      `;
     });
 
-    productSelect.innerHTML=options;
-    saleProduct.innerHTML=options;
-    productTable.innerHTML=html;
+    productTable.innerHTML = html;
+    productSelect.innerHTML = options;
+    saleProduct.innerHTML = options;
   });
 }
 
-// ================= CASHIER REQUEST STOCK =================
+// ================= DASHBOARD =================
+function loadDashboard(){
+
+  db.collection("products")
+  .onSnapshot(s=>{
+
+    let totalProducts = s.size;
+    let totalStock = 0;
+
+    s.forEach(d=>{
+      totalStock += d.data().stock || 0;
+    });
+
+    document.getElementById("totalProducts")
+    .innerText = totalProducts;
+
+    document.getElementById("totalStock")
+    .innerText = totalStock;
+  });
+
+  db.collection("sales")
+  .onSnapshot(s=>{
+
+    let totalSales = 0;
+
+    s.forEach(d=>{
+      totalSales += d.data().total || 0;
+    });
+
+    document.getElementById("totalSales")
+    .innerText = totalSales;
+  });
+
+  db.collection("stockRequests")
+  .where("status","==","pending")
+  .onSnapshot(s=>{
+
+    document.getElementById(
+      "pendingRequests"
+    ).innerText = s.size;
+  });
+}
+
+// ================= STOCK REQUEST =================
 async function requestStock(){
+
   const id = productSelect.value;
 
-  const p = await db.collection("products").doc(id).get();
+  const p =
+    await db.collection("products")
+    .doc(id)
+    .get();
 
-  await db.collection("stockRequests").add({
+  await db.collection("stockRequests")
+  .add({
+
     productId:id,
     productName:p.data().name,
     oldStock:p.data().stock,
     newStock:+newStock.value,
     reason:reason.value,
+
     status:"pending",
+
     requestedBy:auth.currentUser.uid,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+
+    createdAt:
+    firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  alert("Request sent to admin");
+  alert("Request sent");
 }
 
-// ================= ADMIN APPROVAL =================
+// ================= ADMIN =================
 function listenRequests(){
+
   db.collection("stockRequests")
-    .where("status","==","pending")
-    .onSnapshot(s=>{
-      let html="";
+  .where("status","==","pending")
+  .onSnapshot(s=>{
 
-      s.forEach(d=>{
-        const r=d.data();
+    let html = "";
 
-        html+=`
-        <div class="card">
-          <b>${r.productName}</b><br>
-          Old: ${r.oldStock} → New: ${r.newStock}<br>
-          Reason: ${r.reason || "none"}<br>
+    s.forEach(d=>{
 
-          <button onclick="approve('${d.id}','${r.productId}',${r.newStock})"
-            style="background:#22c55e;margin-top:6px">
-            Approve
-          </button>
+      const r = d.data();
 
-          <button onclick="reject('${d.id}')"
-            style="background:#ef4444;margin-top:6px">
-            Reject
-          </button>
-        </div>`;
-      });
+      html += `
+      <div class="card">
 
-      requests.innerHTML = html;
+      <b>${r.productName}</b><br><br>
+
+      Old Stock:
+      ${r.oldStock}
+
+      <br>
+
+      New Stock:
+      ${r.newStock}
+
+      <br><br>
+
+      Reason:
+      ${r.reason || "none"}
+
+      <br><br>
+
+      <button
+      onclick="approve(
+      '${d.id}',
+      '${r.productId}',
+      ${r.newStock}
+      )"
+
+      style="background:#22c55e">
+      Approve
+      </button>
+
+      <button
+      onclick="reject('${d.id}')"
+
+      style="
+      background:#ef4444;
+      margin-top:8px">
+      Reject
+      </button>
+
+      </div>
+      `;
     });
+
+    requests.innerHTML = html;
+  });
 }
 
 async function approve(id,productId,newStock){
+
   const batch = db.batch();
 
-  batch.update(db.collection("products").doc(productId),{
-    stock:newStock
-  });
+  batch.update(
+    db.collection("products").doc(productId),
+    {
+      stock:newStock
+    }
+  );
 
-  batch.update(db.collection("stockRequests").doc(id),{
-    status:"approved"
-  });
+  batch.update(
+    db.collection("stockRequests").doc(id),
+    {
+      status:"approved"
+    }
+  );
 
   await batch.commit();
 
-  alert("Stock approved");
+  alert("Approved");
 }
 
 async function reject(id){
-  await db.collection("stockRequests").doc(id).update({
+
+  await db.collection("stockRequests")
+  .doc(id)
+  .update({
     status:"rejected"
   });
 
@@ -256,30 +510,67 @@ async function reject(id){
 
 // ================= SALES =================
 async function makeSale(){
+
   const id = saleProduct.value;
-  const qty = +document.getElementById("qty").value;
 
-  const p = await db.collection("products").doc(id).get();
+  const quantity =
+    +document.getElementById("qty").value;
 
-  const total = p.data().price * qty;
+  const p =
+    await db.collection("products")
+    .doc(id)
+    .get();
 
-  await db.collection("sales").add({
-    product:p.data().name,
-    qty,
+  const data = p.data();
+
+  if(quantity > data.stock){
+
+    alert("Insufficient stock");
+    return;
+  }
+
+  const total =
+    data.price * quantity;
+
+  // UPDATE STOCK
+  await db.collection("products")
+  .doc(id)
+  .update({
+    stock:data.stock - quantity
+  });
+
+  // SAVE SALE
+  await db.collection("sales")
+  .add({
+
+    product:data.name,
+    qty:quantity,
     total,
+
     date:new Date().toISOString()
   });
 
+  // RECEIPT
   receipt.innerText =
-`RECEIPT
------------------
-Item: ${p.data().name}
-Qty: ${qty}
-Total: ${total}`;
+
+`======== RECEIPT ========
+
+Item: ${data.name}
+
+Qty: ${quantity}
+
+Price: ${data.price}
+
+-------------------------
+
+TOTAL: ${total}
+
+=========================`;
 
   alert("Sale completed");
 }
 
 </script>
+
 </body>
 </html>
