@@ -1,1018 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Enterprise POS v8 — AI-Powered Dashboard</title>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
-<style>
-body{
-margin:0;
-font-family:'Segoe UI',system-ui,sans-serif;
-background:#0b1220;
-color:#e5e7eb;
-}
+<title>Enterprise POS AI</title>
 
-header{
-padding:20px;
-text-align:center;
-background:linear-gradient(135deg,#2563eb,#7c3aed);
-box-shadow:0 4px 20px rgba(37,99,235,0.3);
-}
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
 
-header h2{margin:0;font-size:1.5rem;}
-header p{margin:6px 0 0;opacity:.9;font-size:.9rem;}
-
-.container{
-max-width:1400px;
-margin:auto;
-padding:16px;
-}
-
-.card{
-background:#111827;
-padding:20px;
-margin-bottom:16px;
-border-radius:16px;
-box-shadow:0 4px 20px rgba(0,0,0,.3);
-border:1px solid #1f2937;
-}
-
-.card h3{
-margin-top:0;
-color:#60a5fa;
-font-size:1.1rem;
-display:flex;
-align-items:center;
-gap:8px;
-}
-
-input,select,button{
-width:100%;
-padding:12px;
-margin-top:10px;
-border-radius:10px;
-border:1px solid #334155;
-background:#0b1220;
-color:#fff;
-font-size:.95rem;
-box-sizing:border-box;
-}
-
-button{
-background:#2563eb;
-border:none;
-cursor:pointer;
-font-weight:600;
-transition:all .2s;
-}
-
-button:hover{
-background:#1d4ed8;
-transform:translateY(-1px);
-}
-
-button.secondary{background:#7c3aed;}
-button.secondary:hover{background:#6d28d9;}
-button.success{background:#22c55e;}
-button.success:hover{background:#16a34a;}
-button.danger{background:#ef4444;}
-button.danger:hover{background:#dc2626;}
-button.warning{background:#f59e0b;}
-button.warning:hover{background:#d97706;}
-
-.hidden{display:none;}
-
-table{
-width:100%;
-border-collapse:collapse;
-margin-top:12px;
-font-size:.9rem;
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #1f2937;
-text-align:left;
-}
-
-th{
-background:#0f172a;
-color:#94a3b8;
-font-weight:600;
-}
-
-tr:hover td{background:#0f172a;}
-
-.dashboard{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-gap:14px;
-margin-top:14px;
-}
-
-.stat{
-background:linear-gradient(135deg,#1e293b,#0f172a);
-padding:22px;
-border-radius:14px;
-text-align:center;
-border:1px solid #334155;
-position:relative;
-overflow:hidden;
-}
-
-.stat::before{
-content:'';
-position:absolute;
-top:0;left:0;right:0;
-height:3px;
-background:linear-gradient(90deg,#2563eb,#7c3aed);
-}
-
-.stat h4{
-margin:0;
-font-size:.85rem;
-color:#94a3b8;
-text-transform:uppercase;
-letter-spacing:.5px;
-}
-
-.stat h2{
-margin:10px 0 0;
-font-size:32px;
-font-weight:700;
-}
-
-.stat .trend{
-font-size:.8rem;
-margin-top:6px;
-}
-
-.trend.up{color:#22c55e;}
-.trend.down{color:#ef4444;}
-
-.ai-badge{
-background:linear-gradient(90deg,#2563eb,#7c3aed);
-color:#fff;
-padding:2px 10px;
-border-radius:20px;
-font-size:.75rem;
-font-weight:600;
-}
-
-.ai-panel{
-background:linear-gradient(135deg,#1e1b4b,#0f172a);
-border:1px solid #4338ca;
-}
-
-.recommendation{
-background:#0f172a;
-padding:14px;
-border-radius:12px;
-margin:10px 0;
-border-left:4px solid #22c55e;
-}
-
-.recommendation h4{margin:0 0 6px;color:#22c55e;}
-.recommendation p{margin:0;font-size:.9rem;color:#cbd5e1;}
-
-.anomaly{
-background:#0f172a;
-padding:14px;
-border-radius:12px;
-margin:10px 0;
-border-left:4px solid #ef4444;
-animation:pulse 2s infinite;
-}
-
-.anomaly h4{margin:0 0 6px;color:#ef4444;}
-.anomaly p{margin:0;font-size:.9rem;}
-
-@keyframes pulse{
-0%,100%{opacity:1;}
-50%{opacity:.7;}
-}
-
-.forecast-chart{
-height:200px;
-background:#0f172a;
-border-radius:12px;
-padding:16px;
-margin-top:12px;
-position:relative;
-}
-
-.chart-bar{
-position:absolute;
-bottom:16px;
-width:30px;
-background:linear-gradient(to top,#2563eb,#60a5fa);
-border-radius:4px 4px 0 0;
-transition:height .5s;
-}
-
-.chart-bar.predicted{
-background:linear-gradient(to top,#7c3aed,#a78bfa);
-opacity:.7;
-}
-
-pre{
-white-space:pre-wrap;
-background:#0f172a;
-padding:16px;
-border-radius:12px;
-font-family:'Consolas',monospace;
-font-size:.85rem;
-}
-
-.chat-messages{
-max-height:300px;
-overflow-y:auto;
-background:#0f172a;
-padding:16px;
-border-radius:12px;
-margin-bottom:12px;
-}
-
-.chat-msg{
-margin:8px 0;
-padding:10px 14px;
-border-radius:10px;
-max-width:85%;
-font-size:.9rem;
-}
-
-.chat-msg.user{
-background:#2563eb;
-margin-left:auto;
-text-align:right;
-}
-
-.chat-msg.ai{
-background:#1e293b;
-border:1px solid #334155;
-}
-
-.chat-msg.ai strong{color:#60a5fa;}
-
-.grid-2{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:16px;
-}
-
-@media(max-width:900px){
-.grid-2{grid-template-columns:1fr;}
-}
-
-.loading{
-display:inline-block;
-width:16px;
-height:16px;
-border:2px solid #60a5fa;
-border-radius:50%;
-border-top-color:transparent;
-animation:spin 1s linear infinite;
-vertical-align:middle;
-margin-left:8px;
-}
-
-@keyframes spin{to{transform:rotate(360deg);}}
-
-.confidence-high{color:#22c55e;}
-.confidence-med{color:#f59e0b;}
-.confidence-low{color:#ef4444;}
-</style>
-</head>
-
-<body>
-
-<header>
-<h2>🤖 Enterprise POS v8 — AI-Powered Dashboard</h2>
-<p>Machine Learning Enhanced Inventory & Sales Intelligence</p>
-</header>
-
-<div class="container">
-
-<!-- LOGIN -->
-<div id="loginBox" class="card">
-<h3>🔐 Secure Login</h3>
-<input id="email" placeholder="Email" type="email">
-<input id="password" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<button onclick="signup()" class="secondary">Create Account</button>
-</div>
-
-<!-- APP -->
-<div id="app" class="hidden">
-
-<!-- USER -->
-<div class="card">
-<h3 id="userInfo"></h3>
-<div style="display:flex;gap:10px;">
-<button onclick="logout()" class="danger" style="width:auto;padding:8px 20px;">Logout</button>
-<span class="ai-badge" id="roleBadge">CASHIER</span>
-</div>
-</div>
-
-<!-- AI DASHBOARD -->
-<div class="card ai-panel">
-<h3>🧠 AI Command Center</h3>
-<div class="dashboard">
-<div class="stat">
-<h4>AI Forecast Accuracy</h4>
-<h2 id="forecastAccuracy">94%</h2>
-<div class="trend up">↑ 2.3% this week</div>
-</div>
-<div class="stat">
-<h4>Predicted Stockouts</h4>
-<h2 id="predictedStockouts">0</h2>
-<div class="trend down">Next 7 days</div>
-</div>
-<div class="stat">
-<h4>Anomalies Detected</h4>
-<h2 id="anomalyCount">0</h2>
-<div class="trend up">Real-time monitoring</div>
-</div>
-<div class="stat">
-<h4>Smart Recommendations</h4>
-<h2 id="recommendationCount">0</h2>
-<div class="trend up">Active insights</div>
-</div>
-</div>
-</div>
-
-<!-- MAIN GRID -->
-<div class="grid-2">
-
-<!-- LEFT COLUMN -->
-<div>
-
-<!-- DASHBOARD -->
-<div class="card">
-<h3>📊 Business Overview</h3>
-<div class="dashboard">
-<div class="stat">
-<h4>Total Products</h4>
-<h2 id="totalProducts">0</h2>
-</div>
-<div class="stat">
-<h4>Total Stock</h4>
-<h2 id="totalStock">0</h2>
-</div>
-<div class="stat">
-<h4>Total Sales</h4>
-<h2 id="totalSales">0</h2>
-</div>
-<div class="stat">
-<h4>Pending Requests</h4>
-<h2 id="pendingRequests">0</h2>
-</div>
-</div>
-</div>
-
-<!-- AI DEMAND FORECAST -->
-<div class="card ai-panel">
-<h3>📈 AI Demand Forecasting <span class="ai-badge">ML POWERED</span></h3>
-<p style="color:#94a3b8;font-size:.9rem;margin-top:0;">Predicts inventory needs using moving average + trend analysis</p>
-<div id="forecastContainer">
-<div class="forecast-chart" id="forecastChart">
-<!-- Bars generated by JS -->
-</div>
-<div style="display:flex;gap:20px;margin-top:12px;font-size:.85rem;color:#94a3b8;">
-<span>■ Historical</span>
-<span style="color:#a78bfa;">■ Predicted (AI)</span>
-</div>
-</div>
-<div id="forecastInsights" style="margin-top:14px;"></div>
-</div>
-
-<!-- INVENTORY -->
-<div class="card">
-<h3>📦 Inventory</h3>
-<table>
-<thead>
-<tr><th>Product</th><th>Price</th><th>Stock</th><th>AI Status</th></tr>
-</thead>
-<tbody id="productTable"></tbody>
-</table>
-</div>
-
-<!-- REQUEST STOCK -->
-<div class="card">
-<h3>📋 Request Stock Change</h3>
-<select id="productSelect"></select>
-<input id="newStock" type="number" placeholder="Requested Stock Level">
-<input id="reason" placeholder="Reason for change">
-<button onclick="requestStock()">Submit Request</button>
-</div>
-
-<!-- SALES -->
-<div class="card">
-<h3>💰 Make Sale</h3>
-<select id="saleProduct"></select>
-<input id="qty" type="number" placeholder="Quantity">
-<button onclick="makeSale()">Process Sale</button>
-</div>
-
-</div>
-
-<!-- RIGHT COLUMN -->
-<div>
-
-<!-- AI SMART RECOMMENDATIONS -->
-<div class="card ai-panel">
-<h3>🎯 Smart Recommendations <span class="ai-badge">AI</span></h3>
-<div id="recommendationsList">
-<p style="color:#64748b;text-align:center;padding:20px;">Process a sale to see AI recommendations</p>
-</div>
-</div>
-
-<!-- AI ANOMALY DETECTION -->
-<div class="card ai-panel">
-<h3>🚨 Anomaly Detection <span class="ai-badge">REAL-TIME</span></h3>
-<div id="anomalyList">
-<p style="color:#64748b;text-align:center;padding:20px;">Monitoring transactions...</p>
-</div>
-</div>
-
-<!-- AI CHAT ASSISTANT -->
-<div class="card ai-panel">
-<h3>💬 AI Business Assistant <span class="ai-badge">GEN AI</span></h3>
-<div class="chat-messages" id="chatMessages">
-<div class="chat-msg ai">
-<strong>AI Assistant:</strong> Hello! I'm your POS intelligence assistant. Ask me about sales trends, inventory optimization, or request forecasts. I analyze your data in real-time.
-</div>
-</div>
-<input id="chatInput" placeholder="Ask AI: 'Why is stock low?' or 'Forecast next week'" onkeypress="if(event.key==='Enter')sendChat()">
-<button onclick="sendChat()" class="secondary">Ask AI</button>
-</div>
-
-<!-- ADMIN PANEL -->
-<div class="card" id="adminPanel">
-<h3>🔑 Admin Approval Panel</h3>
-<div id="requests"></div>
-</div>
-
-<!-- RECEIPT -->
-<div class="card">
-<h3>🧾 Receipt</h3>
-<pre id="receipt"></pre>
-</div>
-
-</div>
-</div>
-
-</div>
-</div>
+<link rel="stylesheet" href="./css/style.css">
 
 <!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<script>
-// ================= FIREBASE CONFIG =================
-const firebaseConfig = {
-  apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
-  authDomain: "business-pro-d657d.firebaseapp.com",
-  projectId: "business-pro-d657d",
-  storageBucket: "business-pro-d657d.firebasestorage.app",
-  messagingSenderId: "200900065407",
-  appId: "1:200900065407:web:1f476c5ecab0fe59b6a74a"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-let role = "cashier";
-let productsCache = [];
-let salesHistory = [];
-let stockRequestsHistory = [];
-
-// ================= AUTH =================
-auth.onAuthStateChanged(async u => {
-  if (u) {
-    loginBox.classList.add("hidden");
-    app.classList.remove("hidden");
-    userInfo.innerText = `Logged in as: ${u.email}`;
-
-    const userDoc = await db.collection("users").doc(u.uid).get();
-    role = userDoc.data()?.role || "cashier";
-    roleBadge.innerText = role.toUpperCase();
-
-    if (role !== "admin") {
-      adminPanel.style.display = "none";
-    } else {
-      listenRequests();
-    }
-
-    loadProducts();
-    loadDashboard();
-    loadSalesHistory();
-    initializeAI();
-  }
-});
-
-async function login() {
-  await auth.signInWithEmailAndPassword(email.value, password.value);
-}
-
-async function signup() {
-  const res = await auth.createUserWithEmailAndPassword(email.value, password.value);
-  await db.collection("users").doc(res.user.uid).set({ role: "cashier" });
-  alert("Account created successfully");
-}
-
-function logout() {
-  auth.signOut();
-  location.reload();
-}
-
-// ================= PRODUCTS =================
-function loadProducts() {
-  db.collection("products").onSnapshot(s => {
-    productsCache = [];
-    let html = "";
-    let options = "";
-
-    s.forEach(d => {
-      const p = { id: d.id, ...d.data() };
-      productsCache.push(p);
-
-      // AI Status calculation
-      const aiStatus = calculateAIStatus(p);
-
-      html += `<tr>
-        <td>${p.name}</td>
-        <td>$${p.price}</td>
-        <td>${p.stock}</td>
-        <td>${aiStatus}</td>
-      </tr>`;
-
-      options += `<option value="${d.id}">${p.name} (Stock: ${p.stock})</option>`;
-    });
-
-    productTable.innerHTML = html;
-    productSelect.innerHTML = options;
-    saleProduct.innerHTML = options;
-
-    updateAIInsights();
-  });
-}
-
-function calculateAIStatus(product) {
-  const stock = product.stock || 0;
-  const price = product.price || 0;
-
-  // Simple heuristic ML-like scoring
-  let score = 0;
-  let label = "";
-  let color = "";
-
-  if (stock === 0) {
-    return `<span class="confidence-low">🔴 CRITICAL — Stockout</span>`;
-  }
-
-  if (stock < 10) {
-    return `<span class="confidence-low">🟠 LOW — Reorder Soon</span>`;
-  }
-
-  if (stock > 100) {
-    return `<span class="confidence-med">🟡 HIGH — Overstock Risk</span>`;
-  }
-
-  return `<span class="confidence-high">🟢 OPTIMAL</span>`;
-}
-
-// ================= DASHBOARD =================
-function loadDashboard() {
-  db.collection("products").onSnapshot(s => {
-    let totalProducts = s.size;
-    let totalStock = 0;
-    s.forEach(d => totalStock += d.data().stock || 0);
-    document.getElementById("totalProducts").innerText = totalProducts;
-    document.getElementById("totalStock").innerText = totalStock;
-  });
-
-  db.collection("sales").onSnapshot(s => {
-    let totalSales = 0;
-    salesHistory = [];
-    s.forEach(d => {
-      const data = d.data();
-      totalSales += data.total || 0;
-      salesHistory.push({ id: d.id, ...data, date: data.date ? new Date(data.date) : new Date() });
-    });
-    document.getElementById("totalSales").innerText = "$" + totalSales.toFixed(2);
-    updateForecastChart();
-    detectAnomalies();
-  });
-
-  db.collection("stockRequests").where("status", "==", "pending").onSnapshot(s => {
-    document.getElementById("pendingRequests").innerText = s.size;
-  });
-}
-
-function loadSalesHistory() {
-  db.collection("sales").orderBy("date", "desc").limit(100).get().then(snap => {
-    salesHistory = [];
-    snap.forEach(d => {
-      salesHistory.push({ id: d.id, ...d.data(), date: d.data().date ? new Date(d.data().date) : new Date() });
-    });
-    updateForecastChart();
-  });
-}
-
-// ================= AI / ML FEATURES =================
-
-function initializeAI() {
-  // Initialize AI components
-  updateForecastChart();
-  generateRecommendations();
-}
-
-// 1. DEMAND FORECASTING — Moving Average + Trend
-function updateForecastChart() {
-  const chart = document.getElementById("forecastChart");
-  if (!chart || salesHistory.length === 0) {
-    if (chart) chart.innerHTML = '<p style="text-align:center;padding:60px;color:#64748b;">No sales data for forecasting</p>';
-    return;
-  }
-
-  // Group sales by day (last 14 days)
-  const dailySales = {};
-  const today = new Date();
-
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    dailySales[d.toISOString().split('T')[0]] = 0;
-  }
-
-  salesHistory.forEach(sale => {
-    if (!sale.date) return;
-    const dateKey = sale.date.toISOString().split('T')[0];
-    if (dailySales[dateKey] !== undefined) {
-      dailySales[dateKey] += sale.total || 0;
-    }
-  });
-
-  const dates = Object.keys(dailySales).sort();
-  const values = dates.map(d => dailySales[d]);
-
-  // Calculate 3-day moving average for prediction
-  const predictions = [];
-  for (let i = 0; i < values.length; i++) {
-    if (i < 3) {
-      predictions.push(values[i]); // Not enough history
-    } else {
-      const ma = (values[i-1] + values[i-2] + values[i-3]) / 3;
-      const trend = values[i-1] - values[i-2];
-      predictions.push(Math.max(0, ma + trend * 0.5));
-    }
-  }
-
-  // Render chart
-  const maxVal = Math.max(...values, ...predictions, 1);
-  let html = '';
-
-  dates.forEach((date, i) => {
-    const h1 = (values[i] / maxVal) * 160;
-    const h2 = (predictions[i] / maxVal) * 160;
-    const left = 20 + (i * 60);
-
-    html += `<div class="chart-bar" style="left:${left}px;height:${h1}px;" title="Actual: $${values[i].toFixed(2)}"></div>`;
-    if (i >= 3) {
-      html += `<div class="chart-bar predicted" style="left:${left+15}px;height:${h2}px;" title="AI Predicted: $${predictions[i].toFixed(2)}"></div>`;
-    }
-  });
-
-  chart.innerHTML = html;
-
-  // Generate insights
-  const last7 = values.slice(-7);
-  const avg7 = last7.reduce((a,b) => a+b, 0) / 7;
-  const prev7 = values.slice(-14, -7);
-  const avgPrev = prev7.length > 0 ? prev7.reduce((a,b) => a+b, 0) / prev7.length : avg7;
-  const change = ((avg7 - avgPrev) / avgPrev * 100).toFixed(1);
-
-  let insightHTML = `<div class="recommendation">
-    <h4>📊 7-Day Trend Analysis</h4>
-    <p>Average daily sales: <strong>$${avg7.toFixed(2)}</strong> 
-    ${avgPrev > 0 ? `(<span class="${change >= 0 ? 'trend up' : 'trend down'}">${change >= 0 ? '↑' : '↓'} ${Math.abs(change)}%</span> vs previous week)` : ''}
-    </p>
-  </div>`;
-
-  // Predict stockouts
-  const stockoutRisk = productsCache.filter(p => {
-    const dailyVelocity = avg7 / Math.max(productsCache.length, 1);
-    const daysRemaining = p.stock / Math.max(dailyVelocity / p.price, 0.1);
-    return daysRemaining < 7 && p.stock > 0;
-  });
-
-  document.getElementById("predictedStockouts").innerText = stockoutRisk.length;
-
-  if (stockoutRisk.length > 0) {
-    insightHTML += `<div class="anomaly">
-      <h4>⚠️ Stockout Risk Detected</h4>
-      <p>${stockoutRisk.length} product(s) may run out within 7 days based on current velocity.</p>
-    </div>`;
-  }
-
-  document.getElementById("forecastInsights").innerHTML = insightHTML;
-}
-
-// 2. SMART RECOMMENDATIONS — Market Basket Analysis
-function generateRecommendations() {
-  if (salesHistory.length === 0) return;
-
-  // Simple association: find products frequently sold together
-  const productPairs = {};
-
-  // Group sales by approximate time (within 5 minutes = same transaction)
-  const timeGroups = {};
-  salesHistory.forEach(sale => {
-    if (!sale.date) return;
-    const timeKey = Math.floor(sale.date.getTime() / 300000); // 5-min buckets
-    if (!timeGroups[timeKey]) timeGroups[timeKey] = [];
-    timeGroups[timeKey].push(sale.product);
-  });
-
-  Object.values(timeGroups).forEach(group => {
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const pair = [group[i], group[j]].sort().join(" + ");
-        productPairs[pair] = (productPairs[pair] || 0) + 1;
-      }
-    }
-  });
-
-  const topPairs = Object.entries(productPairs)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-
-  let recHTML = '';
-  if (topPairs.length > 0) {
-    topPairs.forEach(([pair, count]) => {
-      const [p1, p2] = pair.split(" + ");
-      recHTML += `<div class="recommendation">
-        <h4>🛒 Frequently Bought Together</h4>
-        <p>Customers who buy <strong>${p1}</strong> also buy <strong>${p2}</strong> 
-        <span style="color:#22c55e;">(${count} times)</span></p>
-        <button onclick="upsellPair('${p1}', '${p2}')" style="margin-top:8px;width:auto;padding:6px 16px;font-size:.8rem;" class="success">
-          Create Bundle Deal
-        </button>
-      </div>`;
-    });
-  }
-
-  // Low stock recommendations
-  const lowStock = productsCache.filter(p => p.stock < 15 && p.stock > 0);
-  if (lowStock.length > 0) {
-    recHTML += `<div class="recommendation">
-      <h4>📦 Smart Reorder Suggestions</h4>
-      <p>${lowStock.length} items below optimal threshold. AI suggests reordering: 
-      <strong>${lowStock.map(p => p.name).join(", ")}</strong></p>
-    </div>`;
-  }
-
-  document.getElementById("recommendationsList").innerHTML = recHTML || '<p style="color:#64748b;text-align:center;padding:20px;">No recommendations yet. Process more sales to train AI.</p>';
-  document.getElementById("recommendationCount").innerText = topPairs.length + (lowStock.length > 0 ? 1 : 0);
-}
-
-function upsellPair(p1, p2) {
-  addChatMessage("ai", `💡 <strong>Bundle Strategy:</strong> I recommend creating a "${p1} + ${p2}" bundle with 10% discount. Historical data shows these items are purchased together ${Math.floor(Math.random()*5+3)} times per week. This could increase average order value by 15-20%.`);
-}
-
-// 3. ANOMALY DETECTION — Statistical Outliers
-function detectAnomalies() {
-  if (salesHistory.length < 5) return;
-
-  const amounts = salesHistory.map(s => s.total || 0);
-  const mean = amounts.reduce((a,b) => a+b, 0) / amounts.length;
-  const variance = amounts.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / amounts.length;
-  const stdDev = Math.sqrt(variance);
-
-  const anomalies = salesHistory.filter(s => {
-    const zScore = Math.abs((s.total - mean) / stdDev);
-    return zScore > 2.5; // Statistical outlier
-  }).slice(-3);
-
-  let html = '';
-  if (anomalies.length > 0) {
-    anomalies.forEach(a => {
-      html += `<div class="anomaly">
-        <h4>🚨 Unusual Transaction Detected</h4>
-        <p>Sale: <strong>$${a.total}</strong> for ${a.qty}x ${a.product} 
-        <br><span style="font-size:.8rem;color:#94a3b8;">${a.date ? a.date.toLocaleString() : 'Recent'}</span>
-        <br><span style="font-size:.8rem;">Z-Score: ${((a.total - mean)/stdDev).toFixed(2)} (Flagged as outlier)</span></p>
-      </div>`;
-    });
-  } else {
-    html = '<p style="color:#22c55e;text-align:center;padding:20px;">✅ No anomalies detected. All transactions within normal parameters.</p>';
-  }
-
-  document.getElementById("anomalyList").innerHTML = html;
-  document.getElementById("anomalyCount").innerText = anomalies.length;
-}
-
-// 4. AI CHAT ASSISTANT
-function sendChat() {
-  const msg = chatInput.value.trim();
-  if (!msg) return;
-
-  addChatMessage("user", msg);
-  chatInput.value = "";
-
-  // Simple NLP + data analysis
-  const response = processAIQuery(msg);
-  setTimeout(() => addChatMessage("ai", response), 600);
-}
-
-function addChatMessage(sender, text) {
-  const div = document.createElement("div");
-  div.className = `chat-msg ${sender}`;
-  div.innerHTML = text;
-  chatMessages.appendChild(div);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function processAIQuery(query) {
-  const q = query.toLowerCase();
-
-  // Sales analysis
-  if (q.includes("sales") || q.includes("revenue") || q.includes("money")) {
-    const total = salesHistory.reduce((a,s) => a + (s.total||0), 0);
-    const count = salesHistory.length;
-    return `📈 <strong>Sales Analysis:</strong> Total revenue <strong>$${total.toFixed(2)}</strong> across ${count} transactions. Average order value: <strong>$${(total/Math.max(count,1)).toFixed(2)}</strong>.`;
-  }
-
-  // Inventory / Stock
-  if (q.includes("stock") || q.includes("inventory") || q.includes("low")) {
-    const low = productsCache.filter(p => p.stock < 20);
-    if (low.length === 0) return `✅ <strong>Inventory Status:</strong> All products at healthy levels. No immediate action required.`;
-    return `⚠️ <strong>Stock Alert:</strong> ${low.length} products need attention: ${low.map(p => p.name + " (" + p.stock + ")").join(", ")}. I recommend requesting replenishment.`;
-  }
-
-  // Forecast
-  if (q.includes("forecast") || q.includes("predict") || q.includes("next week")) {
-    const avgDaily = salesHistory.slice(-7).reduce((a,s) => a + (s.total||0), 0) / 7;
-    const predicted = avgDaily * 7;
-    return `🔮 <strong>7-Day Forecast:</strong> Based on recent trends, projected revenue is <strong>$${predicted.toFixed(2)}</strong> (±12% confidence interval). Daily average: $${avgDaily.toFixed(2)}.`;
-  }
-
-  // Top products
-  if (q.includes("top") || q.includes("best") || q.includes("popular")) {
-    const productSales = {};
-    salesHistory.forEach(s => {
-      productSales[s.product] = (productSales[s.product] || 0) + (s.qty || 0);
-    });
-    const top = Object.entries(productSales).sort((a,b) => b[1]-a[1])[0];
-    if (!top) return `📊 No sales data available yet to determine top products.`;
-    return `🏆 <strong>Top Product:</strong> ${top[0]} with ${top[1]} units sold. Consider increasing stock levels for this item.`;
-  }
-
-  // Help
-  if (q.includes("help") || q.includes("what can you")) {
-    return `🤖 <strong>I can help you with:</strong><br>• Sales trends and revenue analysis<br>• Inventory status and stock alerts<br>• 7-day demand forecasting<br>• Top performing products<br>• Anomaly explanations<br><br>Try asking: "How are sales?", "What is low stock?", or "Forecast next week"`;
-  }
-
-  // Default
-  return `🤖 <strong>AI Analysis:</strong> I'm analyzing your query. Based on current data: You have ${productsCache.length} products, ${salesHistory.length} recorded sales, and ${document.getElementById("pendingRequests").innerText} pending requests. How else can I assist?`;
-}
-
-function updateAIInsights() {
-  generateRecommendations();
-}
-
-// ================= STOCK REQUEST =================
-async function requestStock() {
-  const id = productSelect.value;
-  const p = await db.collection("products").doc(id).get();
-
-  await db.collection("stockRequests").add({
-    productId: id,
-    productName: p.data().name,
-    oldStock: p.data().stock,
-    newStock: +newStock.value,
-    reason: reason.value,
-    status: "pending",
-    requestedBy: auth.currentUser.uid,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
-
-  // AI insight
-  addChatMessage("ai", `📋 <strong>Request Logged:</strong> Stock change for ${p.data().name} from ${p.data().stock} to ${newStock.value}. I've flagged this for admin review. Based on sales velocity, ${newStock.value > p.data().stock ? 'this increase appears justified.' : 'consider if reduction aligns with demand trends.'}`);
-
-  alert("Request sent successfully");
-  newStock.value = "";
-  reason.value = "";
-}
-
-// ================= ADMIN =================
-function listenRequests() {
-  db.collection("stockRequests").where("status", "==", "pending").onSnapshot(s => {
-    let html = "";
-    s.forEach(d => {
-      const r = d.data();
-      html += `<div class="card" style="background:#0f172a;margin-bottom:10px;">
-        <b>${r.productName}</b><br><br>
-        Old Stock: ${r.oldStock}<br>
-        New Stock: ${r.newStock}<br><br>
-        Reason: ${r.reason || "none"}<br><br>
-        <button onclick="approve('${d.id}', '${r.productId}', ${r.newStock})" class="success" style="width:auto;padding:8px 16px;">Approve</button>
-        <button onclick="reject('${d.id}')" class="danger" style="width:auto;padding:8px 16px;margin-left:8px;">Reject</button>
-      </div>`;
-    });
-    requests.innerHTML = html || '<p style="color:#64748b;">No pending requests</p>';
-  });
-}
-
-async function approve(id, productId, newStock) {
-  const batch = db.batch();
-  batch.update(db.collection("products").doc(productId), { stock: newStock });
-  batch.update(db.collection("stockRequests").doc(id), { status: "approved", approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
-  await batch.commit();
-
-  addChatMessage("ai", `✅ <strong>Approval Processed:</strong> Stock updated. I've recalculated inventory health metrics.`);
-  alert("Approved successfully");
-}
-
-async function reject(id) {
-  await db.collection("stockRequests").doc(id).update({ status: "rejected", rejectedAt: firebase.firestore.FieldValue.serverTimestamp() });
-  alert("Rejected");
-}
-
-// ================= SALES =================
-async function makeSale() {
-  const id = saleProduct.value;
-  const quantity = +document.getElementById("qty").value;
-
-  if (!quantity || quantity <= 0) {
-    alert("Please enter a valid quantity");
-    return;
-  }
-
-  const p = await db.collection("products").doc(id).get();
-  const data = p.data();
-
-  if (quantity > data.stock) {
-    alert("Insufficient stock! AI suggests requesting " + (quantity - data.stock) + " more units.");
-    return;
-  }
-
-  const total = data.price * quantity;
-
-  // UPDATE STOCK
-  await db.collection("products").doc(id).update({ stock: data.stock - quantity });
-
-  // SAVE SALE
-  const saleData = {
-    product: data.name,
-    qty: quantity,
-    total: total,
-    date: new Date().toISOString(),
-    productId: id,
-    userId: auth.currentUser.uid
-  };
-
-  await db.collection("sales").add(saleData);
-
-  // Update local history for AI
-  salesHistory.unshift({ ...saleData, date: new Date() });
-
-  // AI RECOMMENDATIONS TRIGGER
-  generateRecommendations();
-  updateForecastChart();
-  detectAnomalies();
-
-  // RECEIPT
-  receipt.innerText = `======== AI-ENHANCED RECEIPT ========
-
-Item: ${data.name}
-Qty: ${quantity}
-Price: $${data.price}
--------------------------
-TOTAL: $${total}
-
-🤖 AI Insight: ${quantity > 5 ? 'Bulk purchase detected! Consider wholesale pricing.' : 'Thank you for your purchase!'}
-
-=========================`;
-
-  // AI Chat notification
-  addChatMessage("ai", `💰 <strong>Sale Processed:</strong> ${quantity}x ${data.name} = $${total}. Inventory updated: ${data.stock - quantity} units remaining.`);
-
-  alert("Sale completed successfully");
-  document.getElementById("qty").value = "";
-}
-
-// Keyboard shortcut for chat
-chatInput?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') sendChat();
-});
-
-</script>
+<!-- CHART -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- BARCODE -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+</head>
+
+<body>
+
+<header>
+<h1>🤖 Enterprise POS AI</h1>
+<p>Machine Learning Inventory System</p>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+
+<h2>Secure Login</h2>
+
+<input id="email"
+type="email"
+placeholder="Email">
+
+<input id="password"
+type="password"
+placeholder="Password">
+
+<button onclick="login()">
+Login
+</button>
+
+<button onclick="signup()">
+Create Account
+</button>
+
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+<div class="topbar">
+
+<h3 id="userInfo"></h3>
+
+<div class="actions">
+
+<button onclick="toggleTheme()">
+Theme
+</button>
+
+<button onclick="logout()">
+Logout
+</button>
+
+</div>
+
+</div>
+
+<!-- ANALYTICS -->
+<div class="card">
+
+<h2>📈 Analytics Dashboard</h2>
+
+<div class="chart-container">
+<canvas id="analyticsChart"></canvas>
+</div>
+
+<div id="forecastInsights"></div>
+
+</div>
+
+<!-- BARCODE -->
+<div class="card">
+
+<h2>📷 Barcode Scanner</h2>
+
+<div id="reader"></div>
+
+<button onclick="startScanner()">
+Start Scanner
+</button>
+
+</div>
+
+<!-- INVENTORY -->
+<div class="card">
+
+<h2>📦 Inventory</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Product</th>
+<th>Price</th>
+<th>Stock</th>
+</tr>
+</thead>
+
+<tbody id="productTable"></tbody>
+
+</table>
+
+</div>
+
+<!-- SALES -->
+<div class="card">
+
+<h2>💰 Cart System</h2>
+
+<select id="saleProduct"></select>
+
+<input
+id="qty"
+type="number"
+placeholder="Quantity">
+
+<button onclick="addToCart()">
+Add To Cart
+</button>
+
+<div id="cart"></div>
+
+<button onclick="checkout()">
+Checkout
+</button>
+
+</div>
+
+<!-- AI -->
+<div class="card">
+
+<h2>🧠 AI Assistant</h2>
+
+<div id="chatMessages"></div>
+
+<input
+id="chatInput"
+placeholder="Ask AI">
+
+<button onclick="sendChat()">
+Ask AI
+</button>
+
+</div>
+
+</div>
+</div>
+
+<script src="./js/firebase.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/analytics.js"></script>
+<script src="./js/scanner.js"></script>
+<script src="./js/inventory.js"></script>
+<script src="./js/sales.js"></script>
+<script src="./js/ai.js"></script>
+<script src="./js/theme.js"></script>
+<script src="./js/app.js"></script>
 
 </body>
 </html>
