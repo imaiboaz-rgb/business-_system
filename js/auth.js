@@ -1,30 +1,36 @@
 function login() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
-            document.getElementById('loginBox').classList.add('hidden');
-            document.getElementById('app').classList.remove('hidden');
-        })
+    auth.signInWithEmailAndPassword(email, password)
         .catch(error => alert(error.message));
 }
 
 function signup() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-        .then(userCredential => {
-            const user = userCredential.user;
-            db.collection('users').doc(user.uid).set({
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(res => {
+            db.collection("users").doc(res.user.uid).set({
                 email: email,
-                name: email.split('@')[0],
+                role: "cashier",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            alert("Account created!");
         })
         .catch(error => alert(error.message));
 }
 
 function logout() {
-    firebase.auth().signOut().then(() => location.reload());
+    auth.signOut();
 }
+
+auth.onAuthStateChanged(user => {
+    if (u) {
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('userInfo').innerText = `User: ${u.email}`;
+        loadData();
+    } else {
+        document.getElementById('loginBox').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+    }
+});

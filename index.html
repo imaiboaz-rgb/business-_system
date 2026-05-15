@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enterprise POS AI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
 <link rel="stylesheet" href="style.css">
-<!-- FIREBASE COMPAT -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -14,189 +16,74 @@
 <!-- BARCODE -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-/* Additional styles from beb584f */
 .hidden { display: none; }
-.card { background: #111827; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #1f2937; }
-.chat-msg { margin-bottom: 10px; padding: 10px; border-radius: 8px; }
+.chat-msg { margin-bottom: 10px; padding: 5px; border-radius: 5px; }
 .user { background: #1f2937; text-align: right; }
-.ai { background: #2563eb; color: white; }
-.forecast-chart { height: 200px; position: relative; border-bottom: 1px solid #334155; margin-top: 20px; }
-.chart-bar { position: absolute; bottom: 0; width: 12px; background: #3b82f6; border-radius: 2px 2px 0 0; transition: height 0.5s; }
-.chart-bar.predicted { background: #8b5cf6; opacity: 0.6; }
+.ai { background: #2563eb; }
 </style>
 </head>
 <body>
 <header>
-    <h1>🤖 Enterprise POS AI</h1>
-    <p>Machine Learning Inventory System</p>
+<h1>🤖 Enterprise POS AI</h1>
+<p>Machine Learning Inventory System</p>
 </header>
 <div class="container">
-    <div id="loginBox" class="card">
-        <h2>Secure Login</h2>
-        <input id="email" type="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <button onclick="signup()">Create Account</button>
-    </div>
-    <div id="app" class="hidden">
-        <div class="topbar card">
-            <h3 id="userInfo"></h3>
-            <button onclick="logout()" style="width: auto;">Logout</button>
-        </div>
-        <div class="card">
-            <h2>📈 Analytics Dashboard</h2>
-            <div class="forecast-chart" id="forecastChart"></div>
-            <div id="forecastInsights"></div>
-        </div>
-        <div class="card">
-            <h2>📦 Inventory</h2>
-            <select id="saleProduct"></select>
-            <input id="qty" type="number" placeholder="Quantity">
-            <button onclick="makeSale()" class="success">Make Sale</button>
-            <div id="receipt" style="font-family: monospace; white-space: pre; background: #000; padding: 10px; margin-top: 10px;"></div>
-        </div>
-        <div class="card">
-            <h2>🧠 AI Assistant</h2>
-            <div id="chatMessages" style="height: 200px; overflow-y: auto; padding: 10px; background: #0b1220; border-radius: 10px;"></div>
-            <input id="chatInput" placeholder="Ask AI: 'How are sales?'" onkeypress="if(event.key==='Enter')sendChat()">
-            <button onclick="sendChat()" class="secondary">Ask AI</button>
-        </div>
-    </div>
+<div class="card" id="loginBox">
+<h2>Secure Login</h2>
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="signup()">Create Account</button>
 </div>
-
-<script>
-// ================= FIREBASE CONFIG =================
-const firebaseConfig = {
-  apiKey: "AIzaSyDH1sF1FEasvvisSp-B8m2ETk2N5L4rZq8",
-  authDomain: "business-pro-d657d.firebaseapp.com",
-  projectId: "business-pro-d657d",
-  storageBucket: "business-pro-d657d.firebasestorage.app",
-  messagingSenderId: "200900065407",
-  appId: "1:200900065407:web:1f476c5ecab0fe59b6a74a"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth();
-
-let productsCache = [];
-let salesHistory = [];
-
-// ================= AUTH =================
-auth.onAuthStateChanged(async u => {
-  if (u) {
-    document.getElementById('loginBox').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('userInfo').innerText = `Welcome, ${u.email}`;
-    loadData();
-  } else {
-    document.getElementById('loginBox').classList.remove('hidden');
-    document.getElementById('app').classList.add('hidden');
-  }
-});
-
-function login() {
-  const e = document.getElementById('email').value;
-  const p = document.getElementById('password').value;
-  auth.signInWithEmailAndPassword(e, p).catch(err => alert(err.message));
-}
-
-function signup() {
-  const e = document.getElementById('email').value;
-  const p = document.getElementById('password').value;
-  auth.createUserWithEmailAndPassword(e, p).then(res => {
-    db.collection("users").doc(res.user.uid).set({ email: e, role: "cashier" });
-  }).catch(err => alert(err.message));
-}
-
-function logout() { auth.signOut(); }
-
-// ================= DATA =================
-function loadData() {
-  db.collection("products").onSnapshot(s => {
-    productsCache = s.docs.map(d => ({ id: d.id, ...d.data() }));
-    updateUI();
-  });
-  db.collection("sales").orderBy("date", "desc").limit(50).onSnapshot(s => {
-    salesHistory = s.docs.map(d => ({ ...d.data(), date: d.data().date ? (typeof d.data().date === 'string' ? new Date(d.data().date) : d.data().date.toDate()) : new Date() }));
-    updateForecast();
-  });
-}
-
-function updateUI() {
-  const sel = document.getElementById("saleProduct");
-  sel.innerHTML = productsCache.map(p => `<option value="${p.id}">${p.name} ($${p.price}) - Stock: ${p.stock}</option>`).join("");
-}
-
-// ================= AI & FORECAST =================
-function sendChat() {
-  const inp = document.getElementById("chatInput");
-  const msg = inp.value.trim();
-  if(!msg) return;
-  addChatMessage("user", msg);
-  inp.value = "";
-  
-  const reply = processAI(msg);
-  setTimeout(() => addChatMessage("ai", reply), 600);
-}
-
-function addChatMessage(sender, text) {
-  const box = document.getElementById("chatMessages");
-  const div = document.createElement("div");
-  div.className = `chat-msg ${sender}`;
-  div.innerHTML = `<strong>${sender.toUpperCase()}:</strong> ${text}`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
-function processAI(q) {
-  q = q.toLowerCase();
-  if (q.includes("sale") || q.includes("revenue")) {
-    const total = salesHistory.reduce((a, s) => a + (s.total || 0), 0);
-    return `Total revenue from recent sales: $${total.toFixed(2)}.`;
-  }
-  if (q.includes("stock") || q.includes("inventory")) {
-    const low = productsCache.filter(p => p.stock < 10);
-    return low.length > 0 ? `Alert: ${low.length} items low on stock.` : `Inventory levels are healthy.`;
-  }
-  return "I'm analyzing your data. Ask me about sales or inventory.";
-}
-
-function updateForecast() {
-    const chart = document.getElementById("forecastChart");
-    if(!chart || salesHistory.length === 0) return;
-    // Simple bar visual
-    let html = "";
-    const max = Math.max(...salesHistory.map(s => s.total || 0), 100);
-    salesHistory.slice(0, 10).forEach((s, i) => {
-        const h = ((s.total || 0) / max) * 150;
-        html += `<div class="chart-bar" style="left: ${i*40}px; height: ${h}px" title="$${s.total}"></div>`;
-    });
-    chart.innerHTML = html;
-}
-
-async function makeSale() {
-  const id = document.getElementById("saleProduct").value;
-  const qty = parseInt(document.getElementById("qty").value);
-  if(!id || !qty) return alert("Select product and quantity");
-  
-  const p = productsCache.find(x => x.id === id);
-  if(qty > p.stock) return alert("Not enough stock!");
-  
-  const total = p.price * qty;
-  await db.collection("sales").add({
-    productId: id,
-    product: p.name,
-    qty: qty,
-    total: total,
-    date: firebase.firestore.FieldValue.serverTimestamp(),
-    userId: auth.currentUser.uid
-  });
-  await db.collection("products").doc(id).update({ stock: p.stock - qty });
-  
-  document.getElementById("receipt").innerText = `Receipt\n-------\n${p.name} x${qty}\nTotal: $${total}`;
-  addChatMessage("ai", `Sale processed: ${p.name} x${qty}.`);
-}
-</script>
+<div id="app" class="hidden">
+<div class="topbar">
+<h3 id="userInfo"></h3>
+<div class="actions">
+<button onclick="toggleTheme()">Theme</button>
+<button onclick="logout()">Logout</button>
+</div>
+</div>
+<div class="card">
+<h2>📈 Analytics Dashboard</h2>
+<div class="chart-container"><canvas id="analyticsChart"></canvas></div>
+<div id="forecastInsights"></div>
+</div>
+<div class="card">
+<h2>📷 Barcode Scanner</h2>
+<div id="reader"></div>
+<button onclick="startScanner()">Start Scanner</button>
+</div>
+<div class="card">
+<h2>📦 Inventory</h2>
+<table>
+<thead><tr><th>Product</th><th>Price</th><th>Stock</th></tr></thead>
+<tbody id="productTable"></tbody>
+</table>
+</div>
+<div class="card">
+<h2>💰 Cart System</h2>
+<select id="saleProduct"></select>
+<input id="qty" type="number" placeholder="Quantity">
+<button onclick="addToCart()">Add To Cart</button>
+<div id="cart" style="margin-top: 10px; border: 1px solid #334155; padding: 10px;"></div>
+<button onclick="checkout()">Checkout</button>
+</div>
+<div class="card">
+<h2>🧠 AI Assistant</h2>
+<div id="chatMessages" style="height: 150px; overflow-y: auto; background: #0b1220; margin-bottom: 10px; padding: 10px;"></div>
+<input id="chatInput" placeholder="Ask AI">
+<button onclick="sendChat()">Ask AI</button>
+</div>
+</div>
+</div>
+<script src="js/firebase.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/scanner.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/sales.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
