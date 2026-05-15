@@ -24,10 +24,10 @@ function logout() {
 }
 
 auth.onAuthStateChanged(user => {
-    if (u) {
+    if (user) {
         document.getElementById('loginBox').classList.add('hidden');
         document.getElementById('app').classList.remove('hidden');
-        document.getElementById('userInfo').innerText = `User: ${u.email}`;
+        document.getElementById('userInfo').innerText = `User: ${user.email}`;
         loadData();
     } else {
         document.getElementById('loginBox').classList.remove('hidden');
